@@ -37,3 +37,15 @@ URL: https://github.com/Ckenen/Snakemake-NanoStrandSeq-Phasing
 Directory: ./5_NanoStrandSeq_Assembly
 
 URL: https://github.com/Ckenen/Snakemake-NanoStrandSeq-Assembly
+
+
+## 7. Others
+
+Benchmark variant calls (SNPs and Indels) and regions for HG001: https://github.com/Ckenen/GRCh38-HG001-Variant-Calls
+
+Benchmark structure variant calls (insertions and deletions) and regions for HG001: https://github.com/Ckenen/Snakemake-WGS-HG001-TGS
+
+Benchmark variant calls (SNPs and Indels) and regions for C57/DBA mouse: https://github.com/Ckenen/GRCm38-C57-DBA-Variant-Calls
+
+Benchmark structure variant calls (insertions and deletions) and regions for C57/DBA mouse: https://github.com/Ckenen/Snakemake-Bulk-WGS-ONT-DBA
+
