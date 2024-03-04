@@ -1,0 +1,22 @@
+name: HG001
+species: Human
+build: GRCh38
+runs:
+ - 20220418_S5CSTreat
+ - 20220430_S5Merged
+ - 20220610_Treat 
+ - 20220708_GM12878 
+ - 20220708_GM12878R2
+ - 20220817_HG001
+ - 20220915_P1 
+ - 20220916_P1 
+ - 20220916_P2
+threads: 12
+table: data/NanoStrandSeq.xls
+fasta: /home/chenzonggui/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.genome.fa
+sizes: /home/chenzonggui/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.genome.sizes
+barcodes: data/nanopore_96_barcodes.fasta
+benchmark_vcf: ../public/GRCh38-HG001-Variant-Calls/results/benchmark_autosomal_v4.2.1_chrx_v3.3.2.vcf.gz
+benchmark_bed: ../public/GRCh38-HG001-Variant-Calls/results/benchmark_autosomal_v4.2.1_chrx_v3.3.2.bed.gz
+mmi: /home/chenzonggui/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.mm2.map-ont.mmi
+min_reads: 50000
