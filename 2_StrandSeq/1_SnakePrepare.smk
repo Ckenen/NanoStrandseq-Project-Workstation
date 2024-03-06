@@ -1,8 +1,6 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-
 rs = ["1", "2"]
-
 outdir = "results/prepare"
 
 rule all:

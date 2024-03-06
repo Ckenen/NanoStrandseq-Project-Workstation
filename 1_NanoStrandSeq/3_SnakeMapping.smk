@@ -2,7 +2,6 @@
 include: "0_SnakeCommon.smk"
 indir = "results/demux/trimmed"
 outdir = "results/mapping"
-#run_cells = run_cells[:10]
 
 rule all:
     input:
@@ -15,7 +14,6 @@ rule all:
         expand(outdir + "/mark_duplicate/{run_cell}.flagstat", run_cell=run_cells),
         expand(outdir + "/remove_duplicate/{run_cell}.bam", run_cell=run_cells),
         expand(outdir + "/remove_duplicate/{run_cell}.flagstat", run_cell=run_cells),
-        outdir + "/final_reads.%s.tsv" % config["name"]
 
 rule minimap2:
     input:
@@ -79,11 +77,6 @@ rule mark_haplotype: # optional
     threads:
         4
     shell:
-        # """
-        # whatshap haplotag --ignore-read-groups --output-threads {threads} --tag-supplementary \
-        #     -r {input.fa} -o {output.bam} {input.vcf} {input.bam} &> {log}
-        # samtools index -@ {threads} {output.bam}
-        # """
         """
         sstools MarkHaplotype -n XP {input.bam} {input.vcf} {output.bam} &> {log}
         samtools index -@ {threads} {output.bam}
@@ -104,7 +97,6 @@ rule mark_duplicate:
         samtools index -@ {threads} {output.bam}
         """
 
-
 rule remove_duplicate:
     input:
         bam = rules.mark_duplicate.output.bam
@@ -117,26 +109,6 @@ rule remove_duplicate:
         samtools view -@ {threads} -F 1024 -b {input.bam} > {output.bam}
         samtools index -@ {threads} {output.bam}
         """
-
-rule report_final_reads:
-    input:
-        txts = expand(outdir + "/mark_duplicate/{run_cell}.flagstat", run_cell=run_cells)
-    output:
-        tsv = outdir + "/final_reads.%s.tsv" % config["name"]
-    run:
-        with open(output.tsv, "w+") as fw:
-            fw.write("Cell\tReads\tDupReads\tUniqReads\n")
-            for path in sorted(input.txts):
-                cell = path.split("/")[-1][:-9]
-                total, uniq, dup = 0, 0, 0
-                for line in open(path):
-                    if "primary mapped" in line:
-                        total = int(line.split()[0])
-                    if "primary duplicates" in line:
-                        dup = int(line.split()[0])
-                line = "\t".join(map(str, [cell, total, dup, total - dup]))
-                fw.write(line + "\n")
-
 
 # Common rules
 

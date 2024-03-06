@@ -1,4 +1,4 @@
-name: C57DBA
+name: B6D2F1
 species: Mouse
 build: GRCm38
 runs:
@@ -12,7 +12,7 @@ table: data/NanoStrandSeq.xls
 fasta: /home/chenzonggui/species/mus_musculus/GRCm38.p6/GRCm38.canonical.genome.fa
 sizes: /home/chenzonggui/species/mus_musculus/GRCm38.p6/GRCm38.canonical.genome.sizes
 barcodes: data/nanopore_96_barcodes.fasta
-benchmark_vcf: /home/chenzonggui/repositories/GRCm38_C57DBA_SNP_Indel/GRCm38_C57BL_6J_DBA_2J_SNP_Indel.vcf.gz
-benchmark_bed: /home/chenzonggui/repositories/GRCm38_C57DBA_SNP_Indel/GRCm38_C57BL_6J_DBA_2J_SNP_Indel.bed.gz
+benchmark_vcf: /home/chenzonggui/repositories/GRCm38_B6D2F1_SNP_Indel/GRCm38_C57BL_6J_DBA_2J_SNP_Indel.vcf.gz
+benchmark_bed: /home/chenzonggui/repositories/GRCm38_B6D2F1_SNP_Indel/GRCm38_C57BL_6J_DBA_2J_SNP_Indel.bed.gz
 mmi: /home/chenzonggui/species/mus_musculus/GRCm38.p6/GRCm38.canonical.mm2.map-ont.mmi
 min_reads: 50000

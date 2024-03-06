@@ -1,0 +1,15 @@
+name: HG001
+species: Human
+build: GRCh38
+runs:
+ - 20160928_PRJEB14185_CEU
+ - 20210729_PRJNA742746_HG001
+threads: 12
+table: data/StrandSeq.xlsx
+fasta: /home/chenzonggui/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.genome.fa
+sizes: /home/chenzonggui/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.genome.sizes
+barcodes: data/nanopore_96_barcodes.fasta
+benchmark_vcf: /home/chenzonggui/repositories/GRCh38_HG001_SNP_Indel/GRCh38_HG001_SNP_Indel.GIAB_v4.2.1_and_v3.3.2.vcf.gz
+benchmark_bed: /home/chenzonggui/repositories/GRCh38_HG001_SNP_Indel/GRCh38_HG001_SNP_Indel.GIAB_v4.2.1_and_v3.3.2.bed.gz
+mmi: /home/chenzonggui/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.mm2.map-ont.mmi
+min_reads: 50000
