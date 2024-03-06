@@ -22,11 +22,11 @@ Benchmark structure variant calls (insertions and deletions) and regions for HG0
 
 https://github.com/Ckenen/GRCh38_HG001_SV
 
-Benchmark small variant calls (SNPs and Indels) and regions for C57/DBA mouse:
+Benchmark small variant calls (SNPs and Indels) and regions for B6D2F1 mouse:
 
-https://github.com/Ckenen/GRCm38_C57DBA_SNP_Indel
+https://github.com/Ckenen/GRCm38_B6D2F1_SNP_Indel
 
-Benchmark structure variant calls (insertions and deletions) and regions for C57/DBA mouse:
+Benchmark structure variant calls (insertions and deletions) and regions for B6D2F1 mouse:
 
-https://github.com/Ckenen/GRCm38_C57DBA_SV
+https://github.com/Ckenen/GRCm38_B6D2F1_SV
 
