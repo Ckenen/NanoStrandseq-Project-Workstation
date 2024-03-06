@@ -2,7 +2,7 @@
 include: "0_SnakeCommon.smk"
 indir = "results/demux/trimmed"
 outdir = "results/mapping"
-# run_cells = run_cells[:1]
+#run_cells = run_cells[:10]
 
 rule all:
     input:
@@ -10,7 +10,7 @@ rule all:
         expand(outdir + "/minimap2/{run_cell}.flagstat", run_cell=run_cells),
         # expand(outdir + "/filtered/{run_cell}.bam", run_cell=run_cells),
         # expand(outdir + "/mark_region/{run_cell}.bam", run_cell=run_cells),
-        # expand(outdir + "/mark_parental/{run_cell}.bam", run_cell=run_cells),
+        # expand(outdir + "/mark_haplotype/{run_cell}.bam", run_cell=run_cells),
         expand(outdir + "/mark_duplicate/{run_cell}.bam", run_cell=run_cells),
         expand(outdir + "/mark_duplicate/{run_cell}.flagstat", run_cell=run_cells),
         expand(outdir + "/remove_duplicate/{run_cell}.bam", run_cell=run_cells),
@@ -52,7 +52,7 @@ rule filter_bam:
         samtools index -@ {threads} {output.bam}
         """
 
-rule mark_region:
+rule mark_region: # optional
     input:
         bam = rules.filter_bam.output.bam,
         bed = config["benchmark_bed"]
@@ -68,17 +68,22 @@ rule mark_region:
         samtools index -@ {threads} {output.bam}
         """
 
-rule mark_parental:
+rule mark_haplotype: # optional
     input:
         bam = rules.mark_region.output.bam,
         vcf = config["benchmark_vcf"]
     output:
-        bam = outdir + "/mark_parental/{run}/{cell}.bam"
+        bam = outdir + "/mark_haplotype/{run}/{cell}.bam"
     log:
-        outdir + "/mark_parental/{run}/{cell}.log"
+        outdir + "/mark_haplotype/{run}/{cell}.log"
     threads:
         4
     shell:
+        # """
+        # whatshap haplotag --ignore-read-groups --output-threads {threads} --tag-supplementary \
+        #     -r {input.fa} -o {output.bam} {input.vcf} {input.bam} &> {log}
+        # samtools index -@ {threads} {output.bam}
+        # """
         """
         sstools MarkHaplotype -n XP {input.bam} {input.vcf} {output.bam} &> {log}
         samtools index -@ {threads} {output.bam}
@@ -86,7 +91,7 @@ rule mark_parental:
 
 rule mark_duplicate:
     input:
-        bam = rules.mark_parental.output.bam
+        bam = rules.mark_haplotype.output.bam
     output:
         bam = outdir + "/mark_duplicate/{run}/{cell}.bam"
     log:
@@ -109,7 +114,7 @@ rule remove_duplicate:
         4
     shell:
         """
-        samtools view -@ {threads} -F 3072 -b {input.bam} > {output.bam}
+        samtools view -@ {threads} -F 1024 -b {input.bam} > {output.bam}
         samtools index -@ {threads} {output.bam}
         """
 

@@ -2,7 +2,8 @@
 include: "0_SnakeCommon.smk"
 indir = "results/mapping/final"
 outdir = "results/counts"
-# run_cells = run_cells[:10]
+#run_cells = run_cells[:10]
+# run_cells = ["20220708_GM12878/20220708_GM12878.sc001"]
 
 rule all:
     input:

@@ -90,7 +90,7 @@ rule stat_background:
         4
     shell:
         """
-        sstools StatBackground -t {threads} -s {output.tsv2} {input.bam} {output.tsv} &> {log}
+        sstools StatBackground -t {threads} -q 60 -s {output.tsv2} {input.bam} {output.tsv} &> {log}
         """
 
 rule stat_spikiness:

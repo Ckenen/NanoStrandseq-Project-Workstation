@@ -1,6 +1,6 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/mark_parental"
+indir = "results/mapping/final"
 outdir = "results/stat"
 
 rule all:
@@ -25,5 +25,5 @@ rule preseq: # Need all reads, but mark duplicate is unnecessary
         to-mr -o {params.mr1} {input.bam}
         awk '$1~/^chr[0-9]+$/' {params.mr1} > {params.mr2}
         preseq gc_extrap -w 100000 -e 100000000000 -s 100000000 -o {params.tsv} {params.mr2}
-        rm {params.mr1} {params.mr2}; exit 0 ) &> {log}
+        rm -f {params.mr1} {params.mr2}; exit 0 ) &> {log}
         """
