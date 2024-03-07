@@ -1,10 +1,12 @@
 snakejob.*
 results/
-data/
+datasets/
+datasets
 .snakemake/
 temp/
 trash/
 nss-snakemake/
+sj.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
