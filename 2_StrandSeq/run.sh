@@ -1,9 +1,15 @@
 #!/bin/sh
 
-#./1_SnakePrepare.smk
-#./2_SnakeMapping.smk
-#./3_SnakeBarplot.smk
-./4_SnakeStat.smk
-./5_SnakePreSeq.smk
-./6_SnakeAsheley.smk
-./7_SnakeBreakpointR.smk
+for smk in 1_SnakePrepare.smk 2_SnakeMapping.smk 3_SnakeCount.smk 4_SnakeStat.smk 5_SnakePreSeq.smk; do
+    echo $smk
+
+    # Test
+    snakemake -s $smk -np
+
+    # Local
+    # snakemake -s $smk -j
+
+    # Cluster
+    # ./${smk}
+
+done

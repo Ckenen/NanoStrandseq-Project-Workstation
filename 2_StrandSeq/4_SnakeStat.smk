@@ -1,13 +1,13 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/mark_duplicates"
+indir = "results/mapping/final"
 outdir = "results/stat"
 
 rule all:
     input:
         expand(outdir + "/lengths/{run_cell}.tsv.gz", run_cell=run_cells),
         expand(outdir + "/gc_content/{run_cell}.tsv.gz", run_cell=run_cells),
-        expand(outdir + "/gc_density_pkl/{species}.pkl", species=["Human", "Mouse"]),
+        outdir + "/gc_density_pkl/%s.pkl" % config["species"],
         expand(outdir + "/gc_density/{run_cell}.tsv", run_cell=run_cells),
         expand(outdir + "/background/{run_cell}.tsv", run_cell=run_cells),
         expand(outdir + "/spikiness/{run_cell}.tsv", run_cell=run_cells),
@@ -34,7 +34,7 @@ rule stat_length:
 rule stat_gc_content:
     input:
         bam = indir + "/{run}/{cell}.bam",
-        fa = lambda wildcards: GENOMES[get_species(wildcards.cell)]["GENOME_FASTA"]
+        fa = config["fasta"]
     output:
         tmp = temp(outdir + "/gc_content/{run}/{cell}.tsv"),
         tsv = outdir + "/gc_content/{run}/{cell}.tsv.gz",
@@ -51,7 +51,7 @@ rule stat_gc_content:
 
 rule prepare_genome_gc:
     input:
-        fa = lambda wildcards: GENOMES[wildcards.species]["GENOME_FASTA"]
+        fa = config["fasta"]
     output:
         pkl = outdir + "/gc_density_pkl/{species}.pkl"
     log:
@@ -66,8 +66,8 @@ rule prepare_genome_gc:
 rule stat_gc_density:
     input:
         bam = indir + "/{run}/{cell}.bam",
-        fa = lambda wildcards: GENOMES[get_species(wildcards.cell)]["GENOME_FASTA"],
-        pkl = lambda wildcards: outdir + "/gc_density_pkl/%s.pkl" % get_species(wildcards.cell)
+        fa = config["fasta"],
+        pkl = outdir + "/gc_density_pkl/%s.pkl" % config["species"]
     output:
         tsv = outdir + "/gc_density/{run}/{cell}.tsv"
     log:

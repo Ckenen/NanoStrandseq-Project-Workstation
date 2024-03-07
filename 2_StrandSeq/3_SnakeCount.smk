@@ -1,7 +1,8 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/mark_parental"
+indir = "results/mapping/final"
 outdir = "results/counts"
+# run_cells = run_cells[:1]
 
 rule all:
     input:
@@ -12,7 +13,7 @@ rule stat_bin_reads:
     input:
         bam = indir + "/{run}/{cell}.bam"
     output:
-        tsv = outdir + "/stat_bin_reads/{run}/{cell}.tsv",
+        tsv = outdir + "/stat_bin_reads/{run}/{cell}.tsv"
     log:
         outdir + "/stat_bin_reads/{run}/{cell}.log"
     threads:

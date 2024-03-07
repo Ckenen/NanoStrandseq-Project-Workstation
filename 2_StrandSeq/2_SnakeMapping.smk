@@ -2,25 +2,25 @@
 include: "0_SnakeCommon.smk"
 indir = "results/prepare/cutadapt"
 outdir = "results/mapping"
+# run_cells = run_cells[:1]
 
 rule all:
     input:
         expand(outdir + "/bwa/{run_cell}.bam", run_cell=run_cells),
         expand(outdir + "/bwa/{run_cell}.flagstat", run_cell=run_cells),
-        expand(outdir + "/filtered/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/filtered/{run_cell}.flagstat", run_cell=run_cells),
-        expand(outdir + "/mark_duplicates/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/mark_duplicates/{run_cell}.flagstat", run_cell=run_cells),
-        expand(outdir + "/remove_duplicates/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/mark_confident_region/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/mark_parental/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/mark_parental/{run_cell}.flagstat", run_cell=run_cells),
+        # expand(outdir + "/filtered/{run_cell}.bam", run_cell=run_cells),
+        # expand(outdir + "/mark_region/{run_cell}.bam", run_cell=run_cells),
+        # expand(outdir + "/mark_haplotype/{run_cell}.bam", run_cell=run_cells),
+        expand(outdir + "/mark_duplicate/{run_cell}.bam", run_cell=run_cells),
+        expand(outdir + "/mark_duplicate/{run_cell}.flagstat", run_cell=run_cells),
+        expand(outdir + "/remove_duplicate/{run_cell}.bam", run_cell=run_cells),
+        expand(outdir + "/remove_duplicate/{run_cell}.flagstat", run_cell=run_cells),
 
 rule bwa_mem:
     input:
         fq1 = indir + "/{run}/{cell}_1.fastq.gz",
         fq2 = indir + "/{run}/{cell}_2.fastq.gz",
-        idx = lambda wildcards: GENOMES[get_species(wildcards.cell)]["GENOME_BWA"]
+        idx = config["bwa_index"]
     output:
         bam = outdir + "/bwa/{run}/{cell}.bam"
     log:
@@ -48,90 +48,91 @@ rule filter_bam:
         4
     shell:
         """
-        ./scripts/filter_paired_end_bam.py {input.bam} {output.bam} &> {log}
+        sstools FilterBam -p -n '^chr([0-9]+|[XY])$' -q 20 {input.bam} {output.bam} &> {log}
         samtools index -@ {threads} {output.bam}
         """
 
-rule mark_duplicates:
+rule mark_region: # optional
     input:
-        bam = rules.filter_bam.output.bam
+        bam = rules.filter_bam.output.bam,
+        bed = config["benchmark_bed"]
     output:
-        bam = outdir + "/mark_duplicates/{run}/{cell}.bam",
-        txt = outdir + "/mark_duplicates/{run}/{cell}.metrics"
+        bam = outdir + "/mark_region/{run}/{cell}.bam"
     log:
-        outdir + "/mark_duplicates/{run}/{cell}.log"
+        outdir + "/mark_region/{run}/{cell}.log"
     threads:
         4
     shell:
         """
-        picard MarkDuplicates --REMOVE_DUPLICATES false -I {input.bam} -M {output.txt} -O {output.bam} &> {log}
+        sstools MarkRegion -n XH {input.bam} {input.bed} {output.bam} &> {log}
         samtools index -@ {threads} {output.bam}
         """
 
-
-rule remove_duplicates:
+rule mark_haplotype: # optional
     input:
-        bam = rules.filter_bam.output.bam
+        bam = rules.mark_region.output.bam,
+        vcf = config["benchmark_vcf"]
     output:
-        bam = outdir + "/remove_duplicates/{run}/{cell}.bam",
-        txt = outdir + "/remove_duplicates/{run}/{cell}.metrics"
+        bam = outdir + "/mark_haplotype/{run}/{cell}.bam"
     log:
-        outdir + "/remove_duplicates/{run}/{cell}.log"
+        outdir + "/mark_haplotype/{run}/{cell}.log"
     threads:
         4
     shell:
         """
-        picard MarkDuplicates --REMOVE_DUPLICATES true -I {input.bam} -M {output.txt} -O {output.bam} &> {log}
+        sstools MarkHaplotype -n XP {input.bam} {input.vcf} {output.bam} &> {log}
         samtools index -@ {threads} {output.bam}
         """
 
-rule mark_confident_region:
+rule mark_duplicate:
     input:
-        bam = rules.remove_duplicates.output.bam,
-        bed = lambda wildcards: BENCHMARKS[get_cellline(wildcards.cell)]["BED"]
+        bam = rules.mark_haplotype.output.bam
     output:
-        bam = outdir + "/mark_confident_region/{run}/{cell}.bam"
+        bam = outdir + "/mark_duplicate/{run}/{cell}.bam",
+        tmpdir = temp(directory(outdir + "/mark_duplicate/{run}/{cell}.tmp"))
     log:
-        outdir + "/mark_confident_region/{run}/{cell}.log"
+        outdir + "/mark_duplicate/{run}/{cell}.log"
     threads:
         4
     shell:
-        """
-        sstools MarkRegion -f {input.bed} -n XH {input.bam} {output.bam} &> {log}
-        samtools index -@ {threads} {output.bam}
-        """
-
-rule mark_parental:
-    input:
-        bam = rules.mark_confident_region.output.bam,
-        vcf = lambda wildcards: BENCHMARKS[get_cellline(wildcards.cell)]["VCF"]
-    output:
-        bam = outdir + "/mark_parental/{run}/{cell}.bam"
-    log:
-        outdir + "/mark_parental/{run}/{cell}.log"
-    threads:
-        4
-    shell:
-        """
-        sstools MarkHaplotype -n XP -p {input.vcf} {input.bam} {output.bam} &> {log}
-        samtools index -@ {threads} {output.bam}
+        """(
+        mkdir -p {output.tmpdir}
+        sambamba markdup -t {threads} --tmpdir={output.tmpdir} {input.bam} {output.bam}
+        samtools index -@ {threads} {output.bam} ) &> {log}
         """
 
-# rule final_reads:
+# DEPRECATED (too slow)
+
+# rule mark_duplicate:
 #     input:
-#         expand(outdir + "/mark_parental/{run_cell}.flagstat", run_cell=run_cells),
+#         bam = rules.filter_bam.output.bam
 #     output:
-#         tsv = outdir + "/final_reads.tsv"
+#         bam = outdir + "/mark_duplicate/{run}/{cell}.bam",
+#         txt = outdir + "/mark_duplicate/{run}/{cell}.metrics"
+#     log:
+#         outdir + "/mark_duplicate/{run}/{cell}.log"
+#     threads:
+#         4
 #     shell:
 #         """
-#         echo -e "Cell\\tReads\\tDupReads\\tUniqReads" > {output.tsv}
-#         for path in {input}; do
-#             cell=`basename $path .flagstat`
-#             reads=`cat $path | awk '{{print $1}}' | head -n 1`
-#             dups=`cat $path | awk '{{print $1}}' | head -n 5 | tail -n 1`
-#             echo $cell $reads $dups | awk -v OFS='\\t' '{{print $1,$2,$3,$2-$3}}'
-#         done >> {output.tsv}
+#         picard MarkDuplicates --REMOVE_DUPLICATES false -I {input.bam} -M {output.txt} -O {output.bam} &> {log}
+#         samtools index -@ {threads} {output.bam}
 #         """
+
+rule remove_duplicate:
+    input:
+        bam = rules.mark_duplicate.output.bam
+    output:
+        bam = outdir + "/remove_duplicate/{run}/{cell}.bam"
+    log:
+        outdir + "/remove_duplicate/{run}/{cell}.log"
+    threads:
+        4
+    shell:
+        """
+        samtools view -@ {threads} -F 1024 -b {input.bam} > {output.bam}
+        samtools index -@ {threads} {output.bam}
+        """
 
 # Common rule
 

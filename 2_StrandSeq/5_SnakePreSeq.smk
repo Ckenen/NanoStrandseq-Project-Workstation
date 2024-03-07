@@ -1,6 +1,6 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/mark_duplicates"
+indir = "results/mapping/final"
 outdir = "results/stat"
 
 rule all:
