@@ -30,3 +30,19 @@ Benchmark structure variant calls (insertions and deletions) and regions for B6D
 
 https://github.com/Ckenen/GRCm38_B6D2F1_SV
 
+Find barcodes in lone-reads:
+
+https://github.com/Ckenen/fbilr
+
+Split and trim single-cell reads:
+
+https://github.com/Ckenen/nss-demultiplexing
+
+Toolkits for Strand-seq and NanoStrand-seq:
+
+https://github.com/Ckenen/sstools
+
+Others dependencies:
+
+https://github.com/Ckenen/pyBioInfo
+
