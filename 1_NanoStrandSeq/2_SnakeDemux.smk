@@ -73,7 +73,7 @@ rule split_reads:
         OUTDIR + "/splitted/{run}.log"
     shell:
         """
-        ./scripts/demux/split_reads.py -e 6 -l 400 {input} {output} &> {log}
+        nss_split_reads.py -e 6 -l 400 {input} {output} &> {log}
         """
 
 rule combine_reads:
@@ -87,8 +87,7 @@ rule combine_reads:
         """
         fq1="{input}/fastqs/{wildcards.cell}_F.fastq"
         fq2="{input}/fastqs/{wildcards.cell}_R.fastq"
-        ( cat $fq1; cat $fq2 | ./scripts/demux/reverse_fastq.py ) 、
-            | pigz -p {threads} -c > {output}
+        ( cat $fq1; cat $fq2 | reverse_fastq.py ) | pigz -p {threads} -c > {output}
         """
 
 rule trim_reads:
@@ -100,5 +99,5 @@ rule trim_reads:
         OUTDIR + "/trimmed/{run}/{cell}.log"
     shell:
         """
-        ./scripts/demux/trim_reads.py {input} {output} &> {log}
+        nss_trim_reads.py {input} {output} &> {log}
         """
