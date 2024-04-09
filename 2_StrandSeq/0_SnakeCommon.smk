@@ -1,12 +1,12 @@
 #!/usr/bin/env
 import pandas as pd
 configfile: "config.yaml" 
-threads = config["threads"]
-runs = config["runs"]
-dat = pd.read_excel(config["table"])
-dat.index = dat["Cell"]
-dat = dat[[run in runs for run in dat["Run"]]]
-dat["RunCell"] = ["%s/%s" % (run, cell) for run, cell in dat[["Run", "Cell"]].values]
-run_cells = list(dat["RunCell"])
-print("Runs: %d" % len(runs))
-print("Cells: %d" % len(run_cells))
+THREADS = config["THREADS"]
+RUNS = config["RUNS"]
+DAT = pd.read_excel(config["TABLE"])
+DAT.index = DAT["Cell"]
+DAT = DAT[DAT["Run"].isin(RUNS)]
+DAT["RunCell"] = ["%s/%s" % (run, cell) for run, cell in DAT[["Run", "Cell"]].values]
+RUN_CELLS = list(DAT["RunCell"])
+print("runs: %d" % len(RUNS))
+print("Cells: %d" % len(RUN_CELLS))

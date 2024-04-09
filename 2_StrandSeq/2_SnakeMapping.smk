@@ -1,30 +1,32 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/prepare/cutadapt"
-outdir = "results/mapping"
-# run_cells = run_cells[:1]
+INDIR = "results/prepare/cutadapt"
+OUTDIR = "results/mapping"
+# RUN_CELLS = RUN_CELLS[:2]
 
 rule all:
     input:
-        expand(outdir + "/bwa/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/bwa/{run_cell}.flagstat", run_cell=run_cells),
-        # expand(outdir + "/filtered/{run_cell}.bam", run_cell=run_cells),
-        # expand(outdir + "/mark_region/{run_cell}.bam", run_cell=run_cells),
-        # expand(outdir + "/mark_haplotype/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/mark_duplicate/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/mark_duplicate/{run_cell}.flagstat", run_cell=run_cells),
-        expand(outdir + "/remove_duplicate/{run_cell}.bam", run_cell=run_cells),
-        expand(outdir + "/remove_duplicate/{run_cell}.flagstat", run_cell=run_cells),
+        expand(OUTDIR + "/bwa/{run_cell}.bam", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/bwa/{run_cell}.flagstat", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/filtered/{run_cell}.bam", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/mark_region/{run_cell}.bam", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/mark_haplotype/{run_cell}.bam", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/mark_duplicate/{run_cell}.bam", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/mark_duplicate/{run_cell}.flagstat", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/remove_duplicate/{run_cell}.bam", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/remove_duplicate/{run_cell}.flagstat", run_cell=RUN_CELLS),
 
 rule bwa_mem:
     input:
-        fq1 = indir + "/{run}/{cell}_1.fastq.gz",
-        fq2 = indir + "/{run}/{cell}_2.fastq.gz",
-        idx = config["bwa_index"]
+        fq1 = INDIR + "/{run}/{cell}_1.fastq.gz",
+        fq2 = INDIR + "/{run}/{cell}_2.fastq.gz",
+        idx = config["BWA_INDEX"]
     output:
-        bam = outdir + "/bwa/{run}/{cell}.bam"
+        bam = OUTDIR + "/bwa/{run}/{cell}.bam"
     log:
-        outdir + "/bwa/{run}/{cell}.log"
+        OUTDIR + "/bwa/{run}/{cell}.log"
+    conda:
+        "bwa"
     params:
         rg = '@RG\\tID:{cell}\\tLB:{cell}\\tSM:{cell}'
     threads:
@@ -41,11 +43,11 @@ rule filter_bam:
     input:
         bam = rules.bwa_mem.output.bam
     output:
-        bam = outdir + "/filtered/{run}/{cell}.bam"
+        bam = OUTDIR + "/filtered/{run}/{cell}.bam"
     log:
-        outdir + "/filtered/{run}/{cell}.log"
+        OUTDIR + "/filtered/{run}/{cell}.log"
     threads:
-        4
+        1
     shell:
         """
         sstools FilterBam -p -n '^chr([0-9]+|[XY])$' -q 20 {input.bam} {output.bam} &> {log}
@@ -55,13 +57,13 @@ rule filter_bam:
 rule mark_region: # optional
     input:
         bam = rules.filter_bam.output.bam,
-        bed = config["benchmark_bed"]
+        bed = config["SNP_BED"]
     output:
-        bam = outdir + "/mark_region/{run}/{cell}.bam"
+        bam = OUTDIR + "/mark_region/{run}/{cell}.bam"
     log:
-        outdir + "/mark_region/{run}/{cell}.log"
+        OUTDIR + "/mark_region/{run}/{cell}.log"
     threads:
-        4
+        1
     shell:
         """
         sstools MarkRegion -n XH {input.bam} {input.bed} {output.bam} &> {log}
@@ -71,13 +73,13 @@ rule mark_region: # optional
 rule mark_haplotype: # optional
     input:
         bam = rules.mark_region.output.bam,
-        vcf = config["benchmark_vcf"]
+        vcf = config["SNP_VCF"]
     output:
-        bam = outdir + "/mark_haplotype/{run}/{cell}.bam"
+        bam = OUTDIR + "/mark_haplotype/{run}/{cell}.bam"
     log:
-        outdir + "/mark_haplotype/{run}/{cell}.log"
+        OUTDIR + "/mark_haplotype/{run}/{cell}.log"
     threads:
-        4
+        1
     shell:
         """
         sstools MarkHaplotype -n XP {input.bam} {input.vcf} {output.bam} &> {log}
@@ -88,10 +90,10 @@ rule mark_duplicate:
     input:
         bam = rules.mark_haplotype.output.bam
     output:
-        bam = outdir + "/mark_duplicate/{run}/{cell}.bam",
-        tmpdir = temp(directory(outdir + "/mark_duplicate/{run}/{cell}.tmp"))
+        bam = OUTDIR + "/mark_duplicate/{run}/{cell}.bam",
+        tmpdir = temp(directory(OUTDIR + "/mark_duplicate/{run}/{cell}.tmp"))
     log:
-        outdir + "/mark_duplicate/{run}/{cell}.log"
+        OUTDIR + "/mark_duplicate/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -101,31 +103,13 @@ rule mark_duplicate:
         samtools index -@ {threads} {output.bam} ) &> {log}
         """
 
-# DEPRECATED (too slow)
-
-# rule mark_duplicate:
-#     input:
-#         bam = rules.filter_bam.output.bam
-#     output:
-#         bam = outdir + "/mark_duplicate/{run}/{cell}.bam",
-#         txt = outdir + "/mark_duplicate/{run}/{cell}.metrics"
-#     log:
-#         outdir + "/mark_duplicate/{run}/{cell}.log"
-#     threads:
-#         4
-#     shell:
-#         """
-#         picard MarkDuplicates --REMOVE_DUPLICATES false -I {input.bam} -M {output.txt} -O {output.bam} &> {log}
-#         samtools index -@ {threads} {output.bam}
-#         """
-
 rule remove_duplicate:
     input:
         bam = rules.mark_duplicate.output.bam
     output:
-        bam = outdir + "/remove_duplicate/{run}/{cell}.bam"
+        bam = OUTDIR + "/remove_duplicate/{run}/{cell}.bam"
     log:
-        outdir + "/remove_duplicate/{run}/{cell}.log"
+        OUTDIR + "/remove_duplicate/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -133,8 +117,6 @@ rule remove_duplicate:
         samtools view -@ {threads} -F 1024 -b {input.bam} > {output.bam}
         samtools index -@ {threads} {output.bam}
         """
-
-# Common rule
 
 rule bam_flagstat:
     input:

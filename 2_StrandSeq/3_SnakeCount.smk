@@ -1,36 +1,37 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/final"
-outdir = "results/counts"
-# run_cells = run_cells[:1]
+INDIR = "results/mapping/final"
+OUTDIR = "results/counts"
+# RUN_CELLS = RUN_CELLS[:1]
 
 rule all:
     input:
-        expand(outdir + "/stat_bin_reads/{run_cell}.tsv", run_cell=run_cells),
-        expand(outdir + "/plot_bin_reads/{run_cell}.pdf", run_cell=run_cells)
+        expand(OUTDIR + "/stat_bin_reads/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/plot_bin_reads/{run_cell}.pdf", run_cell=RUN_CELLS)
 
 rule stat_bin_reads:
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        tsv = outdir + "/stat_bin_reads/{run}/{cell}.tsv"
+        tsv = OUTDIR + "/stat_bin_reads/{run}/{cell}.tsv"
     log:
-        outdir + "/stat_bin_reads/{run}/{cell}.log"
+        OUTDIR + "/stat_bin_reads/{run}/{cell}.log"
     threads:
         8
     shell:
         """
-        sstools StatBinRead --width 1000000 --remove-duplicates --threads {threads} {input.bam} {output.tsv} &> {log}
+        sstools StatBinRead --width 1000000 --remove-duplicates \
+            --threads {threads} {input.bam} {output.tsv} &> {log}
         """
 
 rule plot_bin_reads:
     input:
         tsv = rules.stat_bin_reads.output.tsv
     output:
-        pdf1 = outdir + "/plot_bin_reads/{run}/{cell}.pdf",
-        pdf2 = outdir + "/plot_bin_reads/{run}/{cell}.trimmed.pdf"
+        pdf1 = OUTDIR + "/plot_bin_reads/{run}/{cell}.pdf",
+        pdf2 = OUTDIR + "/plot_bin_reads/{run}/{cell}.trimmed.pdf"
     log:
-        outdir + "/plot_bin_reads/{run}/{cell}.log"
+        OUTDIR + "/plot_bin_reads/{run}/{cell}.log"
     shell:
         """(
         sstools PlotBinRead {input.tsv} {output.pdf1}
