@@ -1,53 +1,52 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-
-covs1 = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100]
+COVS1 = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100]
 tmp = []
-for name in names:
+for name in NAMES:
     if name.endswith(".full"):
         tmp.append(name)
     else:
-        if int(name.split(".")[1].split("-")[0][3:]) in covs1:
+        if int(name.split(".")[1].split("-")[0][3:]) in COVS1:
             tmp.append(name)
-
-names = tmp
-
-chroms = ["chr%d" % c for c in range(1, 23)]
-callers = ["clair2", "longshot", "nanocaller"][2:]
-engines = ["xcmp"]
+NAMES = tmp
+NAMES = list(filter(lambda x: "RmDupFlag" not in x, NAMES))
+CHROMS = ["chr%d" % c for c in range(1, 23)]
+CALLERS = ["clair2", "longshot", "nanocaller"][2:]
+ENGINES = ["xcmp"]
 
 rule all:
     input:
-        # expand(outdir + "/snvs/chroms/{caller}/{name}/{chrom}.vcf.gz", caller=callers, name=names, chrom=chroms),
-        expand(outdir + "/snvs/chroms/{caller}/{name}/chrX.vcf.gz", caller=["nanocaller"], name=["PacBio.full"]), # For chrX only.
-        expand(outdir + "/snvs/concated/{caller}/{name}.vcf.gz", caller=callers, name=names),
-        expand(outdir + "/snvs/benchmark/{caller}/{name}.json", caller=callers, name=names),
-        #expand(outdir + "/snvs/benchmark_{engine}/{caller}/{name}", engine=engines, caller=callers, name=names),
+        # expand(OUTDIR + "/snvs/chroms/{caller}/{name}/{chrom}.vcf.gz", caller=CALLERS, name=NAMES, chrom=CHROMS),
+        expand(OUTDIR + "/snvs/chroms/{caller}/{name}/chrX.vcf.gz", caller=["nanocaller"], name=["PacBio.full"]), # For chrX only.
+        expand(OUTDIR + "/snvs/concated/{caller}/{name}.vcf.gz", caller=CALLERS, name=NAMES),
+        expand(OUTDIR + "/snvs/benchmark/{caller}/{name}.json", caller=CALLERS, name=NAMES),
+        # expand(OUTDIR + "/snvs/benchmark_{engine}/{caller}/{name}", engine=ENGINES, caller=CALLERS, name=NAMES),
 
 ## Clair2
 
 def get_clair2_model(name):
     if name.split(".")[0] == "PacBio":
-        return "/home/chenzonggui/software/princess/bin/modules/ccs/model"
+        return CLAIR_MODEL_CCS
     else:
-        return "/home/chenzonggui/software/princess/bin/modules/ont/model"
+        return CLAIR_MODEL_ONT
 
 rule clair2:
     input:
         fasta = FASTA,
-        bam = outdir + "/bams/{name}.bam"
+        bam = OUTDIR + "/bams/{name}.bam"
     output:
-        tmp = temp(outdir + "/snvs/chroms/clair2/{name}/{chrom}.vcf"),
-        vcf = outdir + "/snvs/chroms/clair2/{name}/{chrom}.vcf.gz"
+        tmp = temp(OUTDIR + "/snvs/chroms/clair2/{name}/{chrom}.vcf"),
+        vcf = OUTDIR + "/snvs/chroms/clair2/{name}/{chrom}.vcf.gz"
     log:
-        outdir + "/snvs/chroms/clair2/{name}/{chrom}.log"
+        OUTDIR + "/snvs/chroms/clair2/{name}/{chrom}.log"
+    conda:
+        "clair"
     params:
         model = lambda wildcards: get_clair2_model(wildcards.name)
     threads:
         8
     shell:
         """(
-        set +u; source activate clair
         clair.py callVarBam \
             --chkpnt_fn {params.model} \
             --ref_fn {input.fasta} \
@@ -56,7 +55,6 @@ rule clair2:
             --sampleName clair2 \
             --threads {threads} \
             --call_fn {output.tmp}
-        conda deactivate
         bgzip -c {output.tmp} > {output.vcf}
         tabix -p vcf {output.vcf} ) &> {log}
         """
@@ -74,23 +72,23 @@ def get_nanocaller_parameters(name):
 rule nanocaller: # do not support depth <= 1
     input:
         fasta = FASTA,
-        bam = outdir + "/bams/{name}.bam"
+        bam = OUTDIR + "/bams/{name}.bam"
     output:
-        out = temp(directory(outdir + "/snvs/chroms/nanocaller/{name}/{chrom}")),
-        vcf = outdir + "/snvs/chroms/nanocaller/{name}/{chrom}.vcf.gz"
+        out = temp(directory(OUTDIR + "/snvs/chroms/nanocaller/{name}/{chrom}")),
+        vcf = OUTDIR + "/snvs/chroms/nanocaller/{name}/{chrom}.vcf.gz"
     log:
-        outdir + "/snvs/chroms/nanocaller/{name}/{chrom}.log"
+        OUTDIR + "/snvs/chroms/nanocaller/{name}/{chrom}.log"
+    conda:
+        "NanoCaller"
     params:
         sup = lambda wildcards: get_nanocaller_parameters(wildcards.name)
     threads:
         12
     shell:
         """(
-        set +u; source activate NanoCaller
-        python /home/chenzonggui/software/NanoCaller-master/scripts/NanoCaller.py \
+        python ${{HOME}}/software/NanoCaller-master/scripts/NanoCaller.py \
             -bam {input.bam} -o {output.out} -chrom {wildcards.chrom} \
             -ref {input.fasta} -cpu {threads} {params.sup} -sample nanocaller
-        conda deactivate
         cp {output.out}/variant_calls.final.vcf.gz {output.vcf}
         cp {output.out}/variant_calls.final.vcf.gz.tbi {output.vcf}.tbi ) &> {log}
         """
@@ -100,20 +98,20 @@ rule nanocaller: # do not support depth <= 1
 rule longshot:
     input:
         fasta = FASTA,
-        bam = outdir + "/bams/{name}.bam"
+        bam = OUTDIR + "/bams/{name}.bam"
     output:
-        tmp = temp(outdir + "/snvs/chroms/longshot/{name}/{chrom}.vcf"),
-        vcf = outdir + "/snvs/chroms/longshot/{name}/{chrom}.vcf.gz"
+        tmp = temp(OUTDIR + "/snvs/chroms/longshot/{name}/{chrom}.vcf"),
+        vcf = OUTDIR + "/snvs/chroms/longshot/{name}/{chrom}.vcf.gz"
     log:
-        outdir + "/snvs/chroms/longshot/{name}/{chrom}.log"
+        OUTDIR + "/snvs/chroms/longshot/{name}/{chrom}.log"
+    conda:
+        "longshot"
     threads:
         4
     shell:
         """(
-        set +u; source activate longshot
         longshot -A -r {wildcards.chrom} --sample_id longshot --bam {input.bam} \
             --ref {input.fasta} --out {output.tmp}
-        conda deactivate 
         bgzip -c {output.tmp} > {output.vcf} 
         tabix -p vcf {output.vcf} ) &> {log}
         """
@@ -122,11 +120,11 @@ rule longshot:
 
 rule concat_chrom_vcfs:
     input:
-        vcfs = lambda wildcards: [outdir + "/snvs/chroms/{caller}/{name}/%s.vcf.gz" % c for c in chroms]
+        vcfs = lambda wildcards: [OUTDIR + "/snvs/chroms/{caller}/{name}/%s.vcf.gz" % c for c in CHROMS]
     output:
-        vcf = outdir + "/snvs/concated/{caller}/{name}.vcf.gz"
+        vcf = OUTDIR + "/snvs/concated/{caller}/{name}.vcf.gz"
     log:
-        outdir + "/snvs/concated/{caller}/{name}.log"
+        OUTDIR + "/snvs/concated/{caller}/{name}.log"
     shell:
         """(
         bcftools concat -a {input.vcfs} | bcftools sort | bgzip -c > {output.vcf}
@@ -137,13 +135,13 @@ rule concat_chrom_vcfs:
 
 rule benchmark_snp:
     input:
-        vcf1 = BENCHMARK_VCF,
-        vcf2 = outdir + "/snvs/concated/{caller}/{name}.vcf.gz",
-        bed = BENCHMARK_BED
+        vcf1 = SNP_VCF,
+        vcf2 = OUTDIR + "/snvs/concated/{caller}/{name}.vcf.gz",
+        bed = SNP_BED
     output:
-        txt = outdir + "/snvs/benchmark/{caller}/{name}.json"
+        txt = OUTDIR + "/snvs/benchmark/{caller}/{name}.json"
     log:
-        outdir + "/snvs/benchmark/{caller}/{name}.log"
+        OUTDIR + "/snvs/benchmark/{caller}/{name}.log"
     threads:
         8
     shell:
@@ -155,45 +153,47 @@ rule benchmark_snp:
 
 rule happy:
     input:
-        vcf1 = BENCHMARK_VCF,
-        vcf2 = outdir + "/snvs/concated/{caller}/{name}.vcf.gz",
-        bed = BENCHMARK_BED,
+        vcf1 = SNP_VCF,
+        vcf2 = OUTDIR + "/snvs/concated/{caller}/{name}.vcf.gz",
+        bed = SNP_BED,
         fasta = FASTA
     output:
-        out = directory(outdir + "/snvs/happy/{caller}/{name}")
+        out = directory(OUTDIR + "/snvs/happy/{caller}/{name}")
     log:
-        outdir + "/snvs/happy/{caller}/{name}.log"
+        OUTDIR + "/snvs/happy/{caller}/{name}.log"
+    conda:
+        "happy"
     threads:
         8
     shell:
         """(
         mkdir -p {output.out}
-        set +u; source activate happy
         hap.py -r {input.fasta} -o {output.out}/benchmark \
             --threads {threads} --engine xcmp -T {input.bed} \
             {input.vcf1} {input.vcf2} ) &> {log}
         """
 
-# rule benchmark_xcmp:
-#     input:
-#         vcf1 = BENCHMARK_VCF,
-#         vcf2 = outdir + "/snvs/concated/{caller}/{name}.vcf.gz",
-#         bed = BENCHMARK_BED,
-#         fasta = FASTA
-#     output:
-#         out = directory(outdir + "/snvs/benchmark_{engine}/{caller}/{name}")
-#     log:
-#         outdir + "/snvs/benchmark_{engine}/{caller}/{name}.log"
-#     threads:
-#         8
-#     shell:
-#         """(
-#         mkdir -p {output.out}
-#         set +u; source activate happy
-#         hap.py -r {input.fasta} \
-#             -o {output.out}/benchmark \
-#             --threads {threads} \
-#             --engine {wildcards.engine} \
-#             -T {input.bed} \
-#             {input.vcf1} {input.vcf2} ) &> {log}
-#         """
+rule benchmark_xcmp:
+    input:
+        vcf1 = SNP_VCF,
+        vcf2 = OUTDIR + "/snvs/concated/{caller}/{name}.vcf.gz",
+        bed = SNP_BED,
+        fa = FASTA
+    output:
+        out = directory(OUTDIR + "/snvs/benchmark_{engine}/{caller}/{name}")
+    log:
+        OUTDIR + "/snvs/benchmark_{engine}/{caller}/{name}.log"
+    conda:
+        "happy"
+    threads:
+        8
+    shell:
+        """(
+        mkdir -p {output.out}
+        hap.py -r {input.fa} \
+            -o {output.out}/benchmark \
+            --threads {threads} \
+            --engine {wildcards.engine} \
+            -T {input.bed} \
+            {input.vcf1} {input.vcf2} ) &> {log}
+        """

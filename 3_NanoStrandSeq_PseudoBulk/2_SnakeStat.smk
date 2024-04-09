@@ -1,24 +1,23 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-
-names = list(filter(lambda x: "RmDupFlag" not in x, names))
+NAMES = list(filter(lambda x: "RmDupFlag" not in x, NAMES))
 
 rule all:
     input:
-        expand(outdir + "/bw/{name}.bw", name=names),
-        expand(outdir + "/base_depth/{name}.tsv", name=names),
-        # expand(outdir + "/snv_depth/{name}.json", name=names),
+        expand(OUTDIR + "/bw/{name}.bw", name=NAMES),
+        expand(OUTDIR + "/base_depth/{name}.tsv", name=NAMES),
+        # expand(OUTDIR + "/snv_depth/{name}.json", name=NAMES),
 
 rule bam_to_bw:
     input:
-        bam = outdir + "/bams/{name}.bam",
+        bam = OUTDIR + "/bams/{name}.bam",
         txt = SIZES
     output:
-        td = temp(directory(outdir + "/bw/{name}.TRACKS_TMP_TD")),
-        bg = temp(outdir + "/bw/{name}.bedGraph"),
-        bw = outdir + "/bw/{name}.bw"
+        td = temp(directory(OUTDIR + "/bw/{name}.TRACKS_TMP_TD")),
+        bg = temp(OUTDIR + "/bw/{name}.bedGraph"),
+        bw = OUTDIR + "/bw/{name}.bw"
     threads:
-        12
+        THREADS
     shell:
         """
         mkdir -p {output.td}
@@ -29,26 +28,26 @@ rule bam_to_bw:
 
 rule stat_base_depth:
     input:
-        bw = outdir + "/bw/{name}.bw"
+        bw = rules.bam_to_bw.output.bw
     output:
-        txt = outdir + "/base_depth/{name}.tsv"
+        txt = OUTDIR + "/base_depth/{name}.tsv"
     threads:
-        12
+        THREADS
     shell:
         """
         ./scripts/stat_base_depth.py {input.bw} {threads} {output.txt}
         """
 
-# rule stat_snv_depth:
-#     input:
-#         vcf = BENCHMARK_VCF,
-#         bed = BENCHMARK_BED,
-#         bw = outdir + "/bw/{name}.bw"
-#     output:
-#         txt = outdir + "/snv_depth/{name}.json"
-#     threads:
-#         threads
-#     shell:
-#         """
-#         ./scripts/stat_snv_depth.py {input.vcf} {input.bed} {input.bw} {threads} {output.txt}
-#         """
+rule stat_snv_depth:
+    input:
+        vcf = SNP_VCF,
+        bed = SNP_BED,
+        bw = rules.bam_to_bw.output.bw
+    output:
+        txt = OUTDIR + "/snv_depth/{name}.json"
+    threads:
+        THREADS
+    shell:
+        """
+        ./scripts/stat_snv_depth.py {input.vcf} {input.bed} {input.bw} {threads} {output.txt}
+        """

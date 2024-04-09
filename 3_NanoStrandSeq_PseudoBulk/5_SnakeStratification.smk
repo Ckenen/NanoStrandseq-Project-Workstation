@@ -1,30 +1,30 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-
-names = ["PacBio.full", "Ultralong.full", "NSS.full"]
-callers = ["clair2", "longshot", "nanocaller"][2:]
+NAMES = ["PacBio.full", "Ultralong.full", "NSS.full"]
+CALLERS = ["clair2", "longshot", "nanocaller"][2:]
 
 rule all:
     input:
-        expand(outdir + "/stratification/{caller}/{name}", caller=callers, name=names),
+        expand(OUTDIR + "/stratification/{caller}/{name}", caller=CALLERS, name=NAMES),
 
 rule happy:
     input:
-        vcf1 = BENCHMARK_VCF,
-        vcf2 = outdir + "/snvs/concated/{caller}/{name}.vcf.gz",
-        tsv = "data/GRCh38_stratification/v3.1-GRCh38-all-stratifications.tsv",
+        vcf1 = SNP_VCF,
+        vcf2 = OUTDIR + "/snvs/concated/{caller}/{name}.vcf.gz",
+        tsv = STRATIFICATION_TSV,
         fasta = FASTA
     output:
-        out = directory(outdir + "/stratification/{caller}/{name}")
+        directory(OUTDIR + "/stratification/{caller}/{name}")
     log:
-        outdir + "/stratification/{caller}/{name}.log"
+        OUTDIR + "/stratification/{caller}/{name}.log"
+    conda:
+        "happy"
     threads:
         8
     shell:
         """(
-        mkdir -p {output.out}
-        set +u; source activate happy
-        hap.py -r {input.fasta} -o {output.out}/benchmark --threads {threads} \
+        mkdir -p {output}
+        hap.py -r {input.fasta} -o {output}/benchmark --threads {threads} \
             --engine xcmp --no-roc --stratification {input.tsv} \
             {input.vcf1} {input.vcf2} ) &> {log}
         """
