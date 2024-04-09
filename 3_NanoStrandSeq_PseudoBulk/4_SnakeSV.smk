@@ -18,7 +18,7 @@ rule all:
         expand(OUTDIR + "/sv/filtered/{name}.vcf.gz", name=NAMES),
         expand(OUTDIR + "/sv/quantify/{name}.tsv.gz", name=NAMES),
         expand(OUTDIR + "/sv/quantify_lite/{name}.tsv", name=NAMES),
-        # expand(OUTDIR + "/sv/benchmark/{name1}_vs_{name2}.json", name1=["PacBio.full", "Ultralong.full"], name2=NAMES),
+        expand(OUTDIR + "/sv/benchmark/{name1}_vs_{name2}.json", name1=["PacBio.full", "Ultralong.full"], name2=NAMES),
 
 # cuteSV
 
@@ -97,20 +97,20 @@ rule simplify_quant_tsv:
 
 # benchmark of sv
 
-# rule benchmark_sv:
-#     input:
-#         vcf1 = OUTDIR + "/sv/filtered/{name1}.vcf.gz",
-#         vcf2 = OUTDIR + "/sv/filtered/{name2}.vcf.gz",
-#         tsv1 = OUTDIR + "/sv/quantify_lite/{name1}.tsv",
-#         tsv2 = OUTDIR + "/sv/quantify_lite/{name2}.tsv"
-#     output:
-#         txt = OUTDIR + "/sv/benchmark/{name1}_vs_{name2}.json"
-#     log:
-#         OUTDIR + "/sv/benchmark/{name1}_vs_{name2}.log"
-#     params:
-#         bed = "../0_IntergratedAnalysis/2_DownsampleBenchmark/data/benchmark_sv_blacklist.bed",
-#         min_query_cell = lambda wildcards: 3 if "NSS" in wildcards.name2 else 0
-#     shell:
-#         """
-#         ./scripts/benchmark_sv.py {input} {params.bed} {params.min_query_cell} {output} &> {log}
-#         """
+rule benchmark_sv:
+    input:
+        vcf1 = OUTDIR + "/sv/filtered/{name1}.vcf.gz",
+        vcf2 = OUTDIR + "/sv/filtered/{name2}.vcf.gz",
+        tsv1 = OUTDIR + "/sv/quantify_lite/{name1}.tsv",
+        tsv2 = OUTDIR + "/sv/quantify_lite/{name2}.tsv"
+    output:
+        txt = OUTDIR + "/sv/benchmark/{name1}_vs_{name2}.json"
+    log:
+        OUTDIR + "/sv/benchmark/{name1}_vs_{name2}.log"
+    params:
+        bed = "results/sv/regions/benchmark_sv_blacklist.bed",
+        min_query_cell = lambda wildcards: 3 if "NSS" in wildcards.name2 else 0
+    shell:
+        """
+        ./scripts/benchmark_sv.py {input} {params.bed} {params.min_query_cell} {output} &> {log}
+        """
