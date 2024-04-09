@@ -1,60 +1,58 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/final"
-outdir = "results/stat"
+INDIR = "results/mapping/final"
+OUTDIR = "results/stat"
+# RUN_CELLS = RUN_CELLS[:2]
 
 rule all:
     input:
-        expand(outdir + "/lengths/{run_cell}.tsv.gz", run_cell=run_cells),
-        expand(outdir + "/gc_content/{run_cell}.tsv.gz", run_cell=run_cells),
-        expand(outdir + "/gc_density/{run_cell}.tsv", run_cell=run_cells),
-        expand(outdir + "/background/{run_cell}.tsv", run_cell=run_cells),
-        expand(outdir + "/spikiness/{run_cell}.tsv", run_cell=run_cells),
-        expand(outdir + "/depth/{run_cell}.tsv", run_cell=run_cells),
-        expand(outdir + "/coverage/{run_cell}.tsv", run_cell=run_cells),
+        expand(OUTDIR + "/lengths/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/gc_content/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/gc_density_pkl/{species}.pkl", species=["Human", "Mouse"]),
+        expand(OUTDIR + "/gc_density/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/background/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/spikiness/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/depth/{run_cell}.tsv", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/coverage/{run_cell}.tsv", run_cell=RUN_CELLS),
 
 rule stat_length:
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        tmp = temp(outdir + "/lengths/{run}/{cell}.tsv"),
-        tsv = outdir + "/lengths/{run}/{cell}.tsv.gz",
-        tsv2 = outdir + "/lengths/{run}/{cell}_summary.tsv"
+        tsv = OUTDIR + "/lengths/{run}/{cell}.tsv",
+        tsv2 = OUTDIR + "/lengths/{run}/{cell}_summary.tsv"
     log:
-        outdir + "/lengths/{run}/{cell}.log"
+        OUTDIR + "/lengths/{run}/{cell}.log"
     threads:
         4
     shell:
         """
-        sstools StatLength -t {threads} -l SE -s {output.tsv2} {input.bam} {output.tmp} &> {log}
-        gzip -c {output.tmp} > {output.tsv}
+        sstools StatLength -t {threads} -l SE -s {output.tsv2} {input.bam} {output.tsv} &> {log}
         """
 
 rule stat_gc_content:
     input:
-        bam = indir + "/{run}/{cell}.bam",
-        fa = config["fasta"]
+        bam = INDIR + "/{run}/{cell}.bam",
+        fa = lambda wildcards: get_fasta(wildcards.cell)
     output:
-        tmp = temp(outdir + "/gc_content/{run}/{cell}.tsv"),
-        tsv = outdir + "/gc_content/{run}/{cell}.tsv.gz",
-        tsv2 = outdir + "/gc_content/{run}/{cell}_summary.tsv"
+        tsv = OUTDIR + "/gc_content/{run}/{cell}.tsv",
+        tsv2 = OUTDIR + "/gc_content/{run}/{cell}_summary.tsv"
     log:
-        outdir + "/gc_content/{run}/{cell}.log"
+        OUTDIR + "/gc_content/{run}/{cell}.log"
     threads:
         4
     shell:
         """
-        sstools StatGC -t {threads} -s {output.tsv2} {input.bam} {input.fa} {output.tmp} &> {log}
-        gzip -c {output.tmp} > {output.tsv}
+        sstools StatGC -t {threads} -s {output.tsv2} {input.bam} {input.fa} {output.tsv} &> {log}
         """
 
 rule prepare_genome_gc:
     input:
-        fa = config["fasta"]
+        fa = lambda wildcards: config["%s_FASTA" % wildcards.species.upper()]
     output:
-        pkl = outdir + "/gc_density_pkl/%s.pkl" % config["build"]
+        pkl = OUTDIR + "/gc_density_pkl/{species}.pkl"
     log:
-        outdir + "/gc_density_pkl/%s.log" % config["build"]
+        OUTDIR + "/gc_density_pkl/{species}.log"
     threads:
         12
     shell:
@@ -64,13 +62,13 @@ rule prepare_genome_gc:
 
 rule stat_gc_density:
     input:
-        bam = indir + "/{run}/{cell}.bam",
-        fa = config["fasta"],
-        pkl = outdir + "/gc_density_pkl/%s.pkl" % config["build"]
+        bam = INDIR + "/{run}/{cell}.bam",
+        fa = lambda wildcards: get_fasta(wildcards.cell),
+        pkl = lambda wildcards: OUTDIR + "/gc_density_pkl/%s.pkl" % get_species(wildcards.cell)
     output:
-        tsv = outdir + "/gc_density/{run}/{cell}.tsv"
+        tsv = OUTDIR + "/gc_density/{run}/{cell}.tsv"
     log:
-        outdir + "/gc_density/{run}/{cell}.log"
+        OUTDIR + "/gc_density/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -80,12 +78,12 @@ rule stat_gc_density:
 
 rule stat_background:
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        tsv = outdir + "/background/{run}/{cell}.tsv",
-        tsv2 = outdir + "/background/{run}/{cell}_summary.tsv"
+        tsv = OUTDIR + "/background/{run}/{cell}.tsv",
+        tsv2 = OUTDIR + "/background/{run}/{cell}_summary.tsv"
     log:
-        outdir + "/background/{run}/{cell}.log"
+        OUTDIR + "/background/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -95,11 +93,11 @@ rule stat_background:
 
 rule stat_spikiness:
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        tsv = outdir + "/spikiness/{run}/{cell}.tsv"
+        tsv = OUTDIR + "/spikiness/{run}/{cell}.tsv"
     log:
-        outdir + "/spikiness/{run}/{cell}.log"
+        OUTDIR + "/spikiness/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -109,12 +107,12 @@ rule stat_spikiness:
 
 rule stat_depth:
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        tsv1 = outdir + "/depth/{run}/{cell}.tsv",
-        tsv2 = outdir + "/depth/{run}/{cell}_rmdup.tsv"
+        tsv1 = OUTDIR + "/depth/{run}/{cell}.tsv",
+        tsv2 = OUTDIR + "/depth/{run}/{cell}_rmdup.tsv"
     log:
-        outdir + "/depth/{run}/{cell}.log"
+        OUTDIR + "/depth/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -125,11 +123,11 @@ rule stat_depth:
 
 rule stat_coverage:
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        tsv = outdir + "/coverage/{run}/{cell}.tsv"
+        tsv = OUTDIR + "/coverage/{run}/{cell}.tsv"
     log:
-        outdir + "/coverage/{run}/{cell}.log"
+        OUTDIR + "/coverage/{run}/{cell}.log"
     threads:
         4
     shell:
@@ -139,9 +137,9 @@ rule stat_coverage:
 
 # rule stat_genomic_coverage_downsample:
 #     input:
-#         bam = indir + "/{run}/{cell}.bam"
+#         bam = INDIR + "/{run}/{cell}.bam"
 #     output:
-#         tsv = outdir + "/genomic_coverage_downsample/{run}/{cell}.tsv"
+#         tsv = OUTDIR + "/genomic_coverage_downsample/{run}/{cell}.tsv"
 #     threads:
 #         8
 #     shell:
@@ -152,9 +150,9 @@ rule stat_coverage:
 
 # rule stat_pcr_duplicates_downsample:
 #     input:
-#         bam = indir + "/{run}/{cell}.bam",
+#         bam = INDIR + "/{run}/{cell}.bam",
 #     output:
-#         tsv = outdir + "/pcr_duplicates_downsample/{run}/{cell}.tsv"
+#         tsv = OUTDIR + "/pcr_duplicates_downsample/{run}/{cell}.tsv"
 #     threads:
 #         8
 #     shell:

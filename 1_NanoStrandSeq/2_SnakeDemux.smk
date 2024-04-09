@@ -1,27 +1,27 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "data/datasets"
-outdir = "results/demux"
+INDIR = "data/datasets"
+OUTDIR = "results/demux"
 
 rule all:
     input:
-        expand(outdir + "/barcodes/{run}.1.fa", run=runs),
-        expand(outdir + "/fbilr/{run}.matrix.gz", run=runs),
-        expand(outdir + "/fbilr/{run}.stats.tsv.gz", run=runs),
-        # expand(outdir + "/splitted/{run}", run=runs),
-        # expand(outdir + "/combined/{run_cell}.fastq.gz", run_cell=run_cells),
-        expand(outdir + "/trimmed/{run_cell}", run_cell=run_cells),
+        expand(OUTDIR + "/barcodes/{run}.1.fa", run=RUNS),
+        expand(OUTDIR + "/fbilr/{run}.tsv.gz", run=RUNS),
+        expand(OUTDIR + "/fbilr_stats/{run}.tsv", run=RUNS),
+        expand(OUTDIR + "/splitted/{run}", run=RUNS),
+        expand(OUTDIR + "/combined/{run_cell}.fastq.gz", run_cell=RUN_CELLS),
+        expand(OUTDIR + "/trimmed/{run_cell}", run_cell=RUN_CELLS),
 
 rule get_barcodes:
     input:
-        fa = config["barcodes"]
+        fa = config["BARCODES"]
     output:
-        fa1 = outdir + "/barcodes/{run}.1.fa",
-        fa2 = outdir + "/barcodes/{run}.2.fa",
-        tsv = outdir + "/barcodes/{run}.tsv"
+        fa1 = OUTDIR + "/barcodes/{run}.1.fa",
+        fa2 = OUTDIR + "/barcodes/{run}.2.fa",
+        tsv = OUTDIR + "/barcodes/{run}.tsv"
     run:
         import subprocess
-        d = dat[dat["Run"] == wildcards.run]
+        d = DAT[DAT["Run"] == wildcards.run]
         bcs1 = ["Bar%d" % bc for bc in sorted(set(d["Barcode.1st"]))]
         bcs2 = ["Bar%d" % bc for bc in sorted(set(d["Barcode.2nd"]))]
         cmd1 = "samtools faidx %s %s > %s" % (input.fa, " ".join(bcs1), output.fa1)
@@ -34,73 +34,71 @@ rule get_barcodes:
 
 rule fbilr:
     input:
-        fq = indir + "/{run}.fastq.gz",
+        fq = INDIR + "/{run}.fastq.gz",
         fa1 = rules.get_barcodes.output.fa1,
         fa2 = rules.get_barcodes.output.fa2
     output:
-        mtx = outdir + "/fbilr/{run}.matrix.gz"
+        tsv = OUTDIR + "/fbilr/{run}.tsv.gz"
     log:
-        outdir + "/fbilr/{run}.log"
+        OUTDIR + "/fbilr/{run}.log"
     threads:
-        12
+        THREADS
     shell:
-        """
-        fbilr -t {threads} -w 200 -b {input.fa1},{input.fa2} {input.fq} 2> {log} \
-            | pigz -p {threads} -c > {output.mtx}
+        """(
+        fbilr -t {threads} -w 200 -b {input.fa1},{input.fa2} {input.fq} \
+            | pigz -p {threads} -c > {output} ) &> {log}
         """
 
 rule report_matrix_summary:
     input:
-        mtx = rules.fbilr.output.mtx
+        tsv = rules.fbilr.output.tsv
     output:
-        tsv = outdir + "/fbilr/{run}.stats.tsv.gz"
+        tsv = OUTDIR + "/fbilr_stats/{run}.tsv"
     shell:
         """
-        zcat {input.mtx} | awk '$2>=400' | awk -v OFS=',' '{{print $3,$4,$5,$8,$9,$10,$11,$14}}' \
+        zcat {input} | awk '$2>=400' \
+            | awk -v OFS=',' '{{print $3,$4,$5,$8,$9,$10,$11,$14}}' \
             | sort | uniq -c | awk -v OFS=',' '{{print $2,$1}}' \
-            | sed 's/,/\\t/g' | gzip -c > {output.tsv}
+            | sed 's/,/\\t/g' > {output}
         """
 
 rule split_reads:
     input:
-        fq = indir + "/{run}.fastq.gz",
-        mtx = rules.fbilr.output.mtx,
-        tsv = rules.get_barcodes.output.tsv
+        fq = INDIR + "/{run}.fastq.gz",
+        tsv1 = rules.fbilr.output,
+        tsv2 = rules.get_barcodes.output.tsv
     output:
-        out = directory(outdir + "/splitted/{run}")
+        directory(OUTDIR + "/splitted/{run}")
     log:
-        outdir + "/splitted/{run}.log"
-    threads:
-        4
+        OUTDIR + "/splitted/{run}.log"
     shell:
         """
-        nss_split_reads.py -e 6 -l 400 {input.fq} {input.mtx} {input.tsv} {output.out} &> {log}
+        ./scripts/demux/split_reads.py -e 6 -l 400 {input} {output} &> {log}
         """
 
 rule combine_reads:
     input:
-        fqs = rules.split_reads.output.out
+        rules.split_reads.output
     output:
-        fq = outdir + "/combined/{run}/{cell}.fastq.gz"
+        fq = OUTDIR + "/combined/{run}/{cell}.fastq.gz"
     threads:
-        4
+        THREADS
     shell:
         """
-        fq1="{input.fqs}/fastqs/{wildcards.cell}_F.fastq"
-        fq2="{input.fqs}/fastqs/{wildcards.cell}_R.fastq"
-        ( cat $fq1; cat $fq2 | reverse_fastq.py ) | pigz -p {threads} -c > {output.fq}
+        fq1="{input}/fastqs/{wildcards.cell}_F.fastq"
+        fq2="{input}/fastqs/{wildcards.cell}_R.fastq"
+        ( cat $fq1; cat $fq2 | ./scripts/demux/reverse_fastq.py ) 、
+            | pigz -p {threads} -c > {output}
         """
-
-# Trimmed
 
 rule trim_reads:
     input:
-        fq = outdir + "/combined/{run}/{cell}.fastq.gz"
+        fq = OUTDIR + "/combined/{run}/{cell}.fastq.gz"
     output:
-        out = directory(outdir + "/trimmed/{run}/{cell}")
+        directory(OUTDIR + "/trimmed/{run}/{cell}")
     log:
-        outdir + "/trimmed/{run}/{cell}.log"
+        OUTDIR + "/trimmed/{run}/{cell}.log"
     shell:
         """
-        nss_trim_reads.py {input.fq} {output.out} &> {log}
+        ./scripts/demux/trim_reads.py {input} {output} &> {log}
         """

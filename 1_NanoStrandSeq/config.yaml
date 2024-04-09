@@ -1,1 +1,29 @@
-config_HG001.yaml
+HG001_RUNS:
+ - 20220418_S5CSTreat
+ - 20220430_S5Merged
+ - 20220610_Treat 
+ - 20220708_GM12878 
+ - 20220708_GM12878R2
+ - 20220817_HG001
+ - 20220915_P1 
+ - 20220916_P1 
+ - 20220916_P2
+B6D2F1_RUNS:
+ - 20220524_MEF
+ - 20220929_P1
+ - 20220929_P2
+ - 20221005_MEF
+ - 20221006_MEF
+THREADS: 12
+TABLE: data/NanoStrandSeq.xls
+BARCODES: data/nanopore_96_barcodes.fasta
+HUMAN_FASTA: /lustre/grp/tfclab/chenzg/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.genome.fa
+HUMAN_SIZES: /lustre/grp/tfclab/chenzg/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.genome.sizes
+HUMAN_MMI: /lustre/grp/tfclab/chenzg/species/homo_sapiens/GRCh38.p13/GRCh38.canonical.mm2.map-ont.mmi
+MOUSE_FASTA: /lustre/grp/tfclab/chenzg/species/mus_musculus/GRCm38.p6/GRCm38.canonical.genome.fa
+MOUSE_SIZES: /lustre/grp/tfclab/chenzg/species/mus_musculus/GRCm38.p6/GRCm38.canonical.genome.sizes
+MOUSE_MMI: /lustre/grp/tfclab/chenzg/species/mus_musculus/GRCm38.p6/GRCm38.canonical.mm2.map-ont.mmi
+HG001_SNP_BED: /lustre/grp/tfclab/chenzg/repositories/GRCh38_HG001_SNP_Indel/GRCh38_HG001_SNP_Indel.GIAB_v4.2.1_and_v3.3.2.bed.gz
+HG001_SNP_VCF: /lustre/grp/tfclab/chenzg/repositories/GRCh38_HG001_SNP_Indel/GRCh38_HG001_SNP_Indel.GIAB_v4.2.1_and_v3.3.2.vcf.gz
+B6D2F1_SNP_BED: /lustre/grp/tfclab/chenzg/repositories/GRCm38_B6D2F1_SNP_Indel/GRCm38_C57BL_6J_DBA_2J_SNP_Indel.bed.gz
+B6D2F1_SNP_VCF: /lustre/grp/tfclab/chenzg/repositories/GRCm38_B6D2F1_SNP_Indel/GRCm38_C57BL_6J_DBA_2J_SNP_Indel.vcf.gz

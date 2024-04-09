@@ -1,24 +1,26 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-indir = "results/mapping/final"
-outdir = "results/stat"
+INDIR = "results/mapping/final"
+OUTDIR = "results/stat"
+# RUN_CELLS = RUN_CELLS[:2]
 
 rule all:
     input:
-        expand(outdir + "/preseq/{run_cell}", run_cell=run_cells)
-
+        expand(OUTDIR + "/preseq/{run_cell}", run_cell=RUN_CELLS)
 
 rule preseq: # Need all reads, but mark duplicate is unnecessary
     input:
-        bam = indir + "/{run}/{cell}.bam"
+        bam = INDIR + "/{run}/{cell}.bam"
     output:
-        out = directory(outdir + "/preseq/{run}/{cell}")
+        out = directory(OUTDIR + "/preseq/{run}/{cell}")
     log:
-        outdir + "/preseq/{run}/{cell}.log"
+        OUTDIR + "/preseq/{run}/{cell}.log"
+    conda:
+        "preseq"
     params:
-        mr1 = outdir + "/preseq/{run}/{cell}/{cell}.mr",
-        mr2 = outdir + "/preseq/{run}/{cell}/{cell}.filtered.mr",
-        tsv = outdir + "/preseq/{run}/{cell}/{cell}.tsv"
+        mr1 = OUTDIR + "/preseq/{run}/{cell}/{cell}.mr",
+        mr2 = OUTDIR + "/preseq/{run}/{cell}/{cell}.filtered.mr",
+        tsv = OUTDIR + "/preseq/{run}/{cell}/{cell}.tsv"
     shell:
         """(
         set +e; mkdir {output.out}
