@@ -1,19 +1,19 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/blackhole"
+OUTDIR = ROOT_DIR + "/blackhole"
 
 rule all:
     input:
-        outdir + "/bin_reads.bed.gz",
-        outdir + "/blacklist.bed.gz",
-        outdir + "/whitelist.bed.gz"
+        OUTDIR + "/bin_reads.bed.gz",
+        OUTDIR + "/blacklist.bed.gz",
+        OUTDIR + "/whitelist.bed.gz"
 
 rule cal_bin_reads:
     input:
-        bam = assembly_dir + "/prepare/all_cells.all_chroms.bam"
+        bam = ROOT_DIR + "/prepare/all_cells.all_chroms.bam"
     output:
-        bed = outdir + "/bin_reads.bed",
-        bed2 = outdir + "/bin_reads.bed.gz"
+        bed = OUTDIR + "/bin_reads.bed",
+        bed2 = OUTDIR + "/bin_reads.bed.gz"
     threads:
         24
     shell:
@@ -27,8 +27,8 @@ rule call_blacklist:
     input:
         bed = rules.cal_bin_reads.output.bed
     output:
-        bed = outdir + "/blacklist.bed",
-        bed2 = outdir + "/blacklist.bed.gz"
+        bed = OUTDIR + "/blacklist.bed",
+        bed2 = OUTDIR + "/blacklist.bed.gz"
     shell:
         """
         ./scripts/assembly/call_blacklist.py {input.bed} {output.bed}
@@ -39,10 +39,10 @@ rule call_blacklist:
 rule get_whitelist:
     input:
         bed = rules.call_blacklist.output.bed2,
-        txt = GENOMES[species]["GENOME_SIZE"]
+        txt = GENOME_SIZES
     output:
-        txt = temp(outdir + "/whitelist.sizes"),
-        bed = outdir + "/whitelist.bed.gz"
+        txt = temp(OUTDIR + "/whitelist.sizes"),
+        bed = OUTDIR + "/whitelist.bed.gz"
     shell:
         """
         sort -k1,1 {input.txt} > {output.txt}

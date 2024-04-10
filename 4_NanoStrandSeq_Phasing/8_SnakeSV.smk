@@ -1,28 +1,30 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/sv"
-hps = ["hp1", "hp2"]
+OUTDIR = ROOT_DIR + "/sv"
+HPS = ["hp1", "hp2"]
 
 rule all:
     input:
-        outdir + "/cutesv.vcf.gz",
-        outdir + "/cutesv.filtered.vcf.gz",
-        outdir + "/quantify_merged.tsv",
-        outdir + "/quantify_merged_lite.tsv",
-        expand(outdir + "/quantify/{chrom}.{hp}.tsv.gz", chrom=chroms, hp=hps),
-        expand(outdir + "/quantify_lite/{hp}.tsv", hp=hps),
-        outdir + "/quantify_lite.tsv"
+        OUTDIR + "/cutesv.vcf.gz",
+        OUTDIR + "/cutesv.filtered.vcf.gz",
+        OUTDIR + "/quantify_merged.tsv",
+        OUTDIR + "/quantify_merged_lite.tsv",
+        expand(OUTDIR + "/quantify/{chrom}.{hp}.tsv.gz", chrom=CHROMS, hp=HPS),
+        expand(OUTDIR + "/quantify_lite/{hp}.tsv", hp=HPS),
+        OUTDIR + "/quantify_lite.tsv"
 
 rule cutesv:
     input:
-        fasta = lambda wildcards: GENOMES[species]["GENOME_FASTA"],
-        bam = assembly_dir + "/prepare/all_cells.all_chroms.bam",
+        fasta = GENOME_FASTA,
+        bam = ROOT_DIR + "/prepare/all_cells.all_chroms.bam",
     output:
-        wd = temp(directory(outdir + "/cutesv.wd")),
-        vcf = temp(outdir + "/cutesv.vcf"),
-        vcf2 = outdir + "/cutesv.vcf.gz"
+        wd = temp(directory(OUTDIR + "/cutesv.wd")),
+        vcf = temp(OUTDIR + "/cutesv.vcf"),
+        vcf2 = OUTDIR + "/cutesv.vcf.gz"
     log:
-        outdir + "/cutesv.log"
+        OUTDIR + "/cutesv.log"
+    conda:
+        "cutesv"
     threads:
         24 # threads
     shell:
@@ -48,7 +50,7 @@ rule filter_vcf:
     input:
         vcf = rules.cutesv.output.vcf2
     output:
-        vcf = outdir + "/cutesv.filtered.vcf.gz"
+        vcf = OUTDIR + "/cutesv.filtered.vcf.gz"
     shell:
         """
         zcat {input.vcf} | ../6_nss-pseudobulk-analysis/scripts/filter_cutesv_vcf.py | bgzip -c > {output.vcf}
@@ -60,10 +62,10 @@ rule filter_vcf:
 rule quantify_all:
     input:
         vcf = rules.filter_vcf.output.vcf,
-        bam = assembly_dir + "/prepare/all_cells.all_chroms.bam"
+        bam = ROOT_DIR + "/prepare/all_cells.all_chroms.bam"
     output:
-        tsv1 = outdir + "/quantify_merged.tsv",
-        tsv2 = outdir + "/quantify_merged_lite.tsv"
+        tsv1 = OUTDIR + "/quantify_merged.tsv",
+        tsv2 = OUTDIR + "/quantify_merged_lite.tsv"
     threads:
         24
     shell:
@@ -77,11 +79,11 @@ rule quantify_all:
 rule quantify_sv:
     input:
         vcf = rules.filter_vcf.output.vcf,
-        bam = assembly_dir + "/round2/bams/{chrom}.{hp}.bam"
+        bam = ROOT_DIR + "/round2/bams/{chrom}.{hp}.bam"
     output:
-        vcf = temp(outdir + "/quantify/{chrom}.{hp}.vcf.gz"),
-        tmp = temp(outdir + "/quantify/{chrom}.{hp}.tsv"),
-        txt = outdir + "/quantify/{chrom}.{hp}.tsv.gz"
+        vcf = temp(OUTDIR + "/quantify/{chrom}.{hp}.vcf.gz"),
+        tmp = temp(OUTDIR + "/quantify/{chrom}.{hp}.tsv"),
+        txt = OUTDIR + "/quantify/{chrom}.{hp}.tsv.gz"
     shell:
         """
         bcftools view {input.vcf} {wildcards.chrom} | bgzip -c > {output.vcf}
@@ -93,9 +95,9 @@ rule quantify_sv:
 
 rule simplify_quant_tsv:
     input:
-        txt_list = [outdir + "/quantify/%s.{hp}.tsv.gz" % c for c in chroms]
+        txt_list = [OUTDIR + "/quantify/%s.{hp}.tsv.gz" % c for c in CHROMS]
     output:
-        txt = outdir + "/quantify_lite/{hp}.tsv"
+        txt = OUTDIR + "/quantify_lite/{hp}.tsv"
     run:
         import gzip
         with open(output.txt, "w+") as fw:
@@ -109,10 +111,10 @@ rule simplify_quant_tsv:
 
 rule merge_haplotype_quant_tsv:
     input:
-        txt1 = outdir + "/quantify_lite/hp1.tsv",
-        txt2 = outdir + "/quantify_lite/hp2.tsv"
+        txt1 = OUTDIR + "/quantify_lite/hp1.tsv",
+        txt2 = OUTDIR + "/quantify_lite/hp2.tsv"
     output:
-        txt = outdir + "/quantify_lite.tsv"
+        txt = OUTDIR + "/quantify_lite.tsv"
     run:
         import pandas as pd
         d1 = pd.read_csv(input.txt1, sep="\t")

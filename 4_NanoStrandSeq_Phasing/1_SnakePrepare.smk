@@ -1,32 +1,32 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/prepare"
+OUTDIR = ROOT_DIR + "/prepare"
 # chroms = ["chr22"]
 
 rule all:
     input:
-        outdir + "/config.json",
-        expand(outdir + "/bams/{cell}.bam", cell=cells),
-        expand(outdir + "/stat_bin_reads/{cell}.RmDup0.tsv", cell=cells),
-        expand(outdir + "/plot_bin_reads/{cell}.RmDup0.pdf", cell=cells),
-        # outdir + "/all_cells.barplot.RmDup0.pdf",
-        outdir + "/all_cells.all_chroms.bam",
-        #outdir + "/all_cells.all_chroms.flagstat",
-        #outdir + "/all_cells.all_chroms.bw",
-        #outdir + "/breakpoints.bedGraph",
-        #outdir + "/all_cells.all_chroms.rmdup.bam",
-        #outdir + "/all_cells.all_chroms.rmdup.flagstat",
-        #outdir + "/all_cells.all_chroms.rmdup.bw",
-        #outdir + "/all_cells.all_chroms.raw.bam",
-        #outdir + "/all_cells.all_chroms.raw.flagstat",
-        #outdir + "/all_cells.all_chroms.raw.bw",
-        #outdir + "/all_cells.all_chroms.raw.cutesv.vcf.gz",
+        OUTDIR + "/config.json",
+        expand(OUTDIR + "/bams/{cell}.bam", cell=CELLS),
+        expand(OUTDIR + "/stat_bin_reads/{cell}.RmDup0.tsv", cell=CELLS),
+        expand(OUTDIR + "/plot_bin_reads/{cell}.RmDup0.pdf", cell=CELLS),
+        # OUTDIR + "/all_cells.barplot.RmDup0.pdf",
+        OUTDIR + "/all_cells.all_chroms.bam",
+        OUTDIR + "/all_cells.all_chroms.flagstat",
+        OUTDIR + "/all_cells.all_chroms.bw",
+        OUTDIR + "/all_cells.all_chroms.rmdup.bam",
+        OUTDIR + "/all_cells.all_chroms.rmdup.flagstat",
+        OUTDIR + "/all_cells.all_chroms.rmdup.bw",
+        OUTDIR + "/all_cells.all_chroms.raw.bam",
+        OUTDIR + "/all_cells.all_chroms.raw.flagstat",
+        OUTDIR + "/all_cells.all_chroms.raw.bw",
+        # OUTDIR + "/breakpoints.bedGraph",
+        # OUTDIR + "/all_cells.all_chroms.raw.cutesv.vcf.gz",
 
 rule copy_config:
     input:
-        txt = assembly_conf
+        txt = CONF
     output:
-        txt = outdir + "/config.json"
+        txt = OUTDIR + "/config.json"
     shell:
         """
         cp {input.txt} {output.txt}
@@ -36,7 +36,7 @@ rule link_bams:
     input:
         bam = lambda wildcards: get_bam(wildcards.cell)
     output:
-        bam = outdir + "/bams/{cell}.bam"
+        bam = OUTDIR + "/bams/{cell}.bam"
     shell:
         """
         bam=`readlink -f {input.bam}`
@@ -46,10 +46,10 @@ rule link_bams:
 
 rule stat_bin_reads:
     input:
-        bam = outdir + "/bams/{cell}.bam"
+        bam = OUTDIR + "/bams/{cell}.bam"
     output:
-        tsv1 = outdir + "/stat_bin_reads/{cell}.RmDup0.tsv",
-        tsv2 = outdir + "/stat_bin_reads/{cell}.RmDup1.tsv"
+        tsv1 = OUTDIR + "/stat_bin_reads/{cell}.RmDup0.tsv",
+        tsv2 = OUTDIR + "/stat_bin_reads/{cell}.RmDup1.tsv"
     threads:
         8
     shell:
@@ -63,8 +63,8 @@ rule plot_bin_reads:
         tsv1 = rules.stat_bin_reads.output.tsv1,
         tsv2 = rules.stat_bin_reads.output.tsv2
     output:
-        pdf1 = outdir + "/plot_bin_reads/{cell}.RmDup0.pdf",
-        pdf2 = outdir + "/plot_bin_reads/{cell}.RmDup1.pdf"
+        pdf1 = OUTDIR + "/plot_bin_reads/{cell}.RmDup0.pdf",
+        pdf2 = OUTDIR + "/plot_bin_reads/{cell}.RmDup1.pdf"
     shell:
         """
         sstools PlotBinRead -t {input.tsv1} {output.pdf1}
@@ -73,11 +73,11 @@ rule plot_bin_reads:
 
 rule merge_pdfs:
     input:
-        pdfs1 = expand(outdir + "/plot_bin_reads/{cell}.RmDup0.pdf", cell=cells),
-        pdfs2 = expand(outdir + "/plot_bin_reads/{cell}.RmDup1.pdf", cell=cells)
+        pdfs1 = expand(OUTDIR + "/plot_bin_reads/{cell}.RmDup0.pdf", cell=CELLS),
+        pdfs2 = expand(OUTDIR + "/plot_bin_reads/{cell}.RmDup1.pdf", cell=CELLS)
     output:
-        pdf1 = outdir + "/all_cells.barplot.RmDup0.pdf",
-        pdf2 = outdir + "/all_cells.barplot.RmDup1.pdf"
+        pdf1 = OUTDIR + "/all_cells.barplot.RmDup0.pdf",
+        pdf2 = OUTDIR + "/all_cells.barplot.RmDup1.pdf"
     shell:
         """
         merge_pdf.py {input.pdfs1} {output.pdf1}
@@ -86,11 +86,11 @@ rule merge_pdfs:
 
 rule merge_bams:
     input:
-        bams = expand(outdir + "/bams/{cell}.bam", cell=cells)
+        bams = expand(OUTDIR + "/bams/{cell}.bam", cell=CELLS)
     output:
-        bam = outdir + "/all_cells.all_chroms.bam"
+        bam = OUTDIR + "/all_cells.all_chroms.bam"
     threads:
-        threads
+        THREADS
     shell:
         """
         samtools merge -@ {threads} -o {output.bam} {input.bams}
@@ -99,11 +99,11 @@ rule merge_bams:
 
 rule make_rmdup_bam:
     input:
-        bam = outdir + "/all_cells.all_chroms.bam"
+        bam = OUTDIR + "/all_cells.all_chroms.bam"
     output:
-        bam = outdir + "/all_cells.all_chroms.rmdup.bam"
+        bam = OUTDIR + "/all_cells.all_chroms.rmdup.bam"
     threads:
-        threads
+        THREADS
     shell:
         """
         samtools view -@ {threads} -F 1024 -o {output.bam} {input.bam}
@@ -112,11 +112,11 @@ rule make_rmdup_bam:
 
 rule merge_raw_bams:
     input:
-        bams = [get_raw_bam(cell) for cell in cells]
+        bams = [get_raw_bam(cell) for cell in CELLS]
     output:
-        bam = outdir + "/all_cells.all_chroms.raw.bam"
+        bam = OUTDIR + "/all_cells.all_chroms.raw.bam"
     threads:
-        threads
+        THREADS
     shell:
         """
         samtools merge -@ {threads} -o {output.bam} {input.bams}
@@ -127,16 +127,15 @@ rule parse_breakpoints:
     input:
         bam = rules.merge_bams.output.bam
     output:
-        bg = outdir + "/breakpoints.bedGraph"
+        bg = OUTDIR + "/breakpoints.bedGraph"
     log:
-        outdir + "/breakpoints.log"
+        OUTDIR + "/breakpoints.log"
     threads:
         48
     shell:
         """
         ./scripts/parse_breakpoints.py {input.bam} {threads} {output.bg} &> {log}
         """
-
 
 # Common rules
 
@@ -153,7 +152,7 @@ rule bam_flagstat:
 rule bam_to_bw:
     input:
         bam = "{prefix}.bam",
-        txt = lambda wildcards: GENOMES[species]["GENOME_SIZE"]
+        txt = GENOME_SIZES
     output:
         td = temp(directory("{prefix}.BAM_TO_BW_SORT_TMP")),
         bed = temp("{prefix}.bed"),
@@ -174,33 +173,33 @@ rule bam_to_bw:
         bedGraphToBigWig {output.bg} {input.txt} {output.bw}
         """
 
-rule cutesv:
-    input:
-        fasta = lambda wildcards: GENOMES[species]["GENOME_FASTA"],
-        bam = outdir + "/all_cells.all_chroms.raw.bam"
-    output:
-        wd = temp(directory(outdir + "/all_cells.all_chroms.raw.cutesv.wd")),
-        vcf = temp(outdir + "/all_cells.all_chroms.raw.cutesv.vcf"),
-        vcf2 = outdir + "/all_cells.all_chroms.raw.cutesv.vcf.gz"
-    log:
-        outdir + "/all_cells.all_chroms.raw.cutesv.log"
-    threads:
-        48 # threads
-    shell:
-        """(
-        mkdir -p {output.wd}
-        cuteSV --max_cluster_bias_INS 100 \
-            --diff_ratio_merging_INS 0.3 \
-            --max_cluster_bias_DEL 100 \
-            --diff_ratio_merging_DEL 0.3 \
-            --threads {threads} \
-            --sample cuteSV \
-            --retain_work_dir \
-            --report_readid \
-            --min_support 1 \
-            --min_size 50 \
-            --genotype \
-            {input.bam} {input.fasta} {output.vcf} {output.wd} 
-        bgzip -c {output.vcf} > {output.vcf2}
-        tabix -p vcf {output.vcf2} ) &> {log}
-        """
+# rule cutesv:
+#     input:
+#         fasta = lambda wildcards: GENOMES[species]["GENOME_FASTA"],
+#         bam = OUTDIR + "/all_cells.all_chroms.raw.bam"
+#     output:
+#         wd = temp(directory(OUTDIR + "/all_cells.all_chroms.raw.cutesv.wd")),
+#         vcf = temp(OUTDIR + "/all_cells.all_chroms.raw.cutesv.vcf"),
+#         vcf2 = OUTDIR + "/all_cells.all_chroms.raw.cutesv.vcf.gz"
+#     log:
+#         OUTDIR + "/all_cells.all_chroms.raw.cutesv.log"
+#     threads:
+#         48 # threads
+#     shell:
+#         """(
+#         mkdir -p {output.wd}
+#         cuteSV --max_cluster_bias_INS 100 \
+#             --diff_ratio_merging_INS 0.3 \
+#             --max_cluster_bias_DEL 100 \
+#             --diff_ratio_merging_DEL 0.3 \
+#             --threads {threads} \
+#             --sample cuteSV \
+#             --retain_work_dir \
+#             --report_readid \
+#             --min_support 1 \
+#             --min_size 50 \
+#             --genotype \
+#             {input.bam} {input.fasta} {output.vcf} {output.wd} 
+#         bgzip -c {output.vcf} > {output.vcf2}
+#         tabix -p vcf {output.vcf2} ) &> {log}
+#         """

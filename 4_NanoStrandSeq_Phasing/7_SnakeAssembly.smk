@@ -1,56 +1,53 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir
-hps = ["hp1", "hp2"]
-#chroms = ["chr1"]
-# chroms.remove("chrX")
-rs = ["round1", "round2"]
-# chroms = ["chrX"]
+OUTDIR = ROOT_DIR
+HPS = ["hp1", "hp2"]
+RS = ["round1", "round2"]
 
 rule all:
     input:
-        # expand(outdir + "/{r}/bams/{chrom}.{hp}.bam", r=rs, chrom=chroms, hp=hps),
-        # expand(outdir + "/{r}/bams/{chrom}.{hp}.flagstat", r=rs, chrom=chroms, hp=hps),
-        expand(outdir + "/{r}/merged.bam", r=["round2"]),
-        # expand(outdir + "/{r}/merged.{hp}.bam", r=rs, hp=hps),
-        # expand(outdir + "/{r}/quantify_psudobulk_sv.{hp}_lite.tsv", r=rs, hp=hps),
-        expand(outdir + "/{r}/matrix/{chrom}.{hp}", r=rs, chrom=chroms, hp=hps),
-        #expand(outdir + "/{r}/benchmark/{chrom}.{hp}", r=rs, chrom=chroms, hp=hps),
-        expand(outdir + "/{r}/matrix2/{chrom}", r=rs, chrom=chroms),
-        expand(outdir + "/{r}/matrix2.stat/{chrom}.tsv", r=rs, chrom=chroms),
-        expand(outdir + "/{r}/matrix2.stat.plot/{chrom}", r=rs, chrom=chroms),
-        expand(outdir + "/{r}/matrix2.filtered/{chrom}.matrix.gz", r=rs, chrom=chroms),
-        # expand(outdir + "/{r}/snvs/{chrom}.vcf.gz", r=rs, chrom=chroms),
-        # expand(outdir + "/{r}/snvs/{chrom}.benchmark", r=rs, chrom=chroms),
-        expand(outdir + "/{r}/snvs.vcf.gz", r=rs),
-        expand(outdir + "/{r}/snvs_benchmark.json", r=rs),
-        #expand(outdir + "/{r}/snvs.benchmark", r=rs),
-        # expand(outdir + "/{r}/hets/{chrom}.bed", r=rs, chrom=chroms),
-        expand(outdir + "/{r}/hets.all.bed.gz", r=rs),
-        #expand(outdir + "/{r}/hets.benchmark", r=rs),
-        #expand(outdir + "/{r}/cuteSV/{chrom}.{hp}.vcf.gz", r=rs, chrom=chroms, hp=hps),
-        #expand(outdir + "/{r}/cuteSV.{hp}.vcf.gz", r=rs, hp=hps),
-        #expand(outdir + "/{r}/cutesv/quantify/{chrom}.{hp}.on_{hpA}.txt.gz", r=rs, chrom=chroms, hp=hps, hpA=hps),
-        #expand(outdir + "/{r}/cutesv/quantify_lite/{chrom}.{hp}.on_{hpA}.tsv", r=rs, chrom=chroms, hp=hps, hpA=hps),
+        # expand(OUTDIR + "/{r}/bams/{chrom}.{hp}.bam", r=RS, chrom=CHROMS, hp=HPS),
+        # expand(OUTDIR + "/{r}/bams/{chrom}.{hp}.flagstat", r=RS, chrom=CHROMS, hp=HPS),
+        expand(OUTDIR + "/{r}/merged.bam", r=["round2"]),
+        # expand(OUTDIR + "/{r}/merged.{hp}.bam", r=RS, hp=HPS),
+        # expand(OUTDIR + "/{r}/quantify_psudobulk_sv.{hp}_lite.tsv", r=RS, hp=HPS),
+        expand(OUTDIR + "/{r}/matrix/{chrom}.{hp}", r=RS, chrom=CHROMS, hp=HPS),
+        #expand(OUTDIR + "/{r}/benchmark/{chrom}.{hp}", r=RS, chrom=CHROMS, hp=HPS),
+        expand(OUTDIR + "/{r}/matrix2/{chrom}", r=RS, chrom=CHROMS),
+        expand(OUTDIR + "/{r}/matrix2.stat/{chrom}.tsv", r=RS, chrom=CHROMS),
+        expand(OUTDIR + "/{r}/matrix2.stat.plot/{chrom}", r=RS, chrom=CHROMS),
+        expand(OUTDIR + "/{r}/matrix2.filtered/{chrom}.matrix.gz", r=RS, chrom=CHROMS),
+        # expand(OUTDIR + "/{r}/snvs/{chrom}.vcf.gz", r=RS, chrom=CHROMS),
+        # expand(OUTDIR + "/{r}/snvs/{chrom}.benchmark", r=RS, chrom=CHROMS),
+        expand(OUTDIR + "/{r}/snvs.vcf.gz", r=RS),
+        expand(OUTDIR + "/{r}/snvs_benchmark.json", r=RS),
+        #expand(OUTDIR + "/{r}/snvs.benchmark", r=RS),
+        # expand(OUTDIR + "/{r}/hets/{chrom}.bed", r=RS, chrom=CHROMS),
+        expand(OUTDIR + "/{r}/hets.all.bed.gz", r=RS),
+        #expand(OUTDIR + "/{r}/hets.benchmark", r=RS),
+        #expand(OUTDIR + "/{r}/cuteSV/{chrom}.{hp}.vcf.gz", r=RS, chrom=CHROMS, hp=HPS),
+        #expand(OUTDIR + "/{r}/cuteSV.{hp}.vcf.gz", r=RS, hp=HPS),
+        #expand(OUTDIR + "/{r}/cutesv/quantify/{chrom}.{hp}.on_{hpA}.txt.gz", r=RS, chrom=CHROMS, hp=HPS, hpA=HPS),
+        #expand(OUTDIR + "/{r}/cutesv/quantify_lite/{chrom}.{hp}.on_{hpA}.tsv", r=RS, chrom=CHROMS, hp=HPS, hpA=HPS),
         
 ## Round 1
 
 rule make_round1_bam:
     input:
-        txt = assembly_dir + "/clusters/clustered/cells.{chrom}.json"
+        txt = ROOT_DIR + "/clusters/clustered/cells.{chrom}.json"
     output:
-        tmp1 = temp(outdir + "/round1/bams/{chrom}.hp1.unsorted.bam"),
-        tmp2 = temp(outdir + "/round1/bams/{chrom}.hp2.unsorted.bam"),
-        bam1 = outdir + "/round1/bams/{chrom}.hp1.bam",
-        bam2 = outdir + "/round1/bams/{chrom}.hp2.bam"
+        tmp1 = temp(OUTDIR + "/round1/bams/{chrom}.hp1.unsorted.bam"),
+        tmp2 = temp(OUTDIR + "/round1/bams/{chrom}.hp2.unsorted.bam"),
+        bam1 = OUTDIR + "/round1/bams/{chrom}.hp1.bam",
+        bam2 = OUTDIR + "/round1/bams/{chrom}.hp2.bam"
     log:
-        outdir + "/round1/bams/{chrom}.log"
+        OUTDIR + "/round1/bams/{chrom}.log"
     threads:
         4
     shell:
         """(
         ./scripts/strandtools/make_haplotype_bam.py \
-            {input.txt} {assembly_dir} {wildcards.chrom} \
+            {input.txt} {ROOT_DIR} {wildcards.chrom} \
             {output.tmp1} {output.tmp2}
         samtools sort -@ {threads} -o {output.bam1} {output.tmp1}
         samtools sort -@ {threads} -o {output.bam2} {output.tmp2}
@@ -62,12 +59,12 @@ rule make_round1_bam:
 
 rule split_haplotype:
     input:
-        bam = assembly_dir + "/prepare/bams/{cell}.bam",
-        bed = outdir + "/round1/hets.all.bed.gz"
+        bam = ROOT_DIR + "/prepare/bams/{cell}.bam",
+        bed = OUTDIR + "/round1/hets.all.bed.gz"
     output:
-        out = directory(outdir + "/round2/splited_haplotype/{cell}")
+        out = directory(OUTDIR + "/round2/splited_haplotype/{cell}")
     log:
-        outdir + "/round2/splited_haplotype/{cell}.log"
+        OUTDIR + "/round2/splited_haplotype/{cell}.log"
     threads:
         4
     shell:
@@ -77,20 +74,20 @@ rule split_haplotype:
 
 rule make_round2_bam:
     input:
-        expand(rules.split_haplotype.output.out, cell=cells),
+        expand(rules.split_haplotype.output.out, cell=CELLS),
     output:
-        tmp1 = temp(outdir + "/round2/bams/{chrom}.hp1.tmp.bam"),
-        tmp2 = temp(outdir + "/round2/bams/{chrom}.hp2.tmp.bam"),
-        bam1 = outdir + "/round2/bams/{chrom}.hp1.bam",
-        bam2 = outdir + "/round2/bams/{chrom}.hp2.bam"
+        tmp1 = temp(OUTDIR + "/round2/bams/{chrom}.hp1.tmp.bam"),
+        tmp2 = temp(OUTDIR + "/round2/bams/{chrom}.hp2.tmp.bam"),
+        bam1 = OUTDIR + "/round2/bams/{chrom}.hp1.bam",
+        bam2 = OUTDIR + "/round2/bams/{chrom}.hp2.bam"
     log:
-        outdir + "/round2/bams/{chrom}.log"
+        OUTDIR + "/round2/bams/{chrom}.log"
     threads:
         4
     shell:
         """(
         ./scripts/strandtools/make_haplotype_bam_r2.py \
-            {assembly_conf} {wildcards.chrom} {output.tmp1} {output.tmp2}
+            {CONF} {wildcards.chrom} {output.tmp1} {output.tmp2}
         samtools sort -@ {threads} -o {output.bam1} {output.tmp1}
         samtools sort -@ {threads} -o {output.bam2} {output.tmp2}
         samtools index -@ {threads} {output.bam1}
@@ -101,10 +98,10 @@ rule make_round2_bam:
 
 rule merge_bams:
     input:
-        bams1 = [outdir + "/{round}/bams/%s.hp1.bam" % c for c in chroms],
-        bams2 = [outdir + "/{round}/bams/%s.hp2.bam" % c for c in chroms]
+        bams1 = [OUTDIR + "/{round}/bams/%s.hp1.bam" % c for c in CHROMS],
+        bams2 = [OUTDIR + "/{round}/bams/%s.hp2.bam" % c for c in CHROMS]
     output:
-        bam = outdir + "/{round}/merged.bam"
+        bam = OUTDIR + "/{round}/merged.bam"
     threads:
         12
     shell:
@@ -124,9 +121,9 @@ rule merge_bams:
 
 rule merge_haplotype_bam:
     input:
-        bams = [outdir + "/{round}/bams/%s.{hp}.bam" % c for c in chroms]
+        bams = [OUTDIR + "/{round}/bams/%s.{hp}.bam" % c for c in CHROMS]
     output:
-        bam  = outdir + "/{round}/merged.{hp}.bam"
+        bam  = OUTDIR + "/{round}/merged.{hp}.bam"
     threads:
         8
     shell:
@@ -137,12 +134,12 @@ rule merge_haplotype_bam:
 
 rule generate_base_matrix:
     input:
-        bam = outdir + "/{r}/bams/{chrom}.{hp}.bam",
-        fa = lambda wildcards: GENOMES[species]["GENOME_FASTA"]
+        bam = OUTDIR + "/{r}/bams/{chrom}.{hp}.bam",
+        fa = GENOME_FASTA
     output:
-        mtx = directory(outdir + "/{r}/matrix/{chrom}.{hp}")
+        mtx = directory(OUTDIR + "/{r}/matrix/{chrom}.{hp}")
     log:
-        outdir + "/{r}/matrix/{chrom}.{hp}.log"
+        OUTDIR + "/{r}/matrix/{chrom}.{hp}.log"
     threads:
         24
     shell:
@@ -153,15 +150,15 @@ rule generate_base_matrix:
 
 rule merge_base_matrix:
     input:
-        fa = lambda wildcards: GENOMES[species]["GENOME_FASTA"],
-        bed = lambda wildcards: BENCHMARKS[cellline]["BED"],
-        vcf = lambda wildcards: BENCHMARKS[cellline]["VCF"],
-        mtxdir1 = outdir + "/{r}/matrix/{chrom}.hp1",
-        mtxdir2 = outdir + "/{r}/matrix/{chrom}.hp2"
+        fa = GENOME_FASTA,
+        bed = SNP_BED,
+        vcf = SNP_VCF,
+        mtxdir1 = OUTDIR + "/{r}/matrix/{chrom}.hp1",
+        mtxdir2 = OUTDIR + "/{r}/matrix/{chrom}.hp2"
     output:
-        directory(outdir + "/{r}/matrix2/{chrom}")
+        directory(OUTDIR + "/{r}/matrix2/{chrom}")
     log:
-        log = outdir + "/{r}/matrix2/{chrom}.log"
+        OUTDIR + "/{r}/matrix2/{chrom}.log"
     threads:
         12
     shell:
@@ -172,11 +169,11 @@ rule merge_base_matrix:
 
 rule stat_matrix2:
     input:
-        outdir + "/{r}/matrix2/{chrom}"
+        OUTDIR + "/{r}/matrix2/{chrom}"
     output:
-        tsv = outdir + "/{r}/matrix2.stat/{chrom}.tsv"
+        tsv = OUTDIR + "/{r}/matrix2.stat/{chrom}.tsv"
     log:
-        outdir + "/{r}/matrix2.stat/{chrom}.log"
+        OUTDIR + "/{r}/matrix2.stat/{chrom}.log"
     threads:
         12
     shell:
@@ -188,7 +185,7 @@ rule plot_stat_matrix2:
     input:
         tsv = rules.stat_matrix2.output.tsv
     output:
-        directory(outdir + "/{r}/matrix2.stat.plot/{chrom}")
+        directory(OUTDIR + "/{r}/matrix2.stat.plot/{chrom}")
     shell:
         """
         ./scripts/assembly/plot_stat_matrix2.py {input.tsv} {output}
@@ -196,9 +193,9 @@ rule plot_stat_matrix2:
 
 rule filter_matrix2:
     input:
-        outdir + "/{r}/matrix2/{chrom}"
+        OUTDIR + "/{r}/matrix2/{chrom}"
     output:
-        txt = outdir + "/{r}/matrix2.filtered/{chrom}.matrix.gz"
+        txt = OUTDIR + "/{r}/matrix2.filtered/{chrom}.matrix.gz"
     shell:
         """
         zcat {input}/*.matrix.gz \
@@ -210,15 +207,15 @@ rule filter_matrix2:
 
 rule make_chrom_snvs:
     input:
-        mtx = outdir + "/{r}/matrix2.filtered/{chrom}.matrix.gz",
-        vcf = assembly_dir + "/snv/concat/nanocaller.vcf.gz",
-        bed = assembly_dir + "/inversions/inversions.bed.gz",
-        txt = lambda wildcards: GENOMES[species]["GENOME_SIZE"]
+        mtx = OUTDIR + "/{r}/matrix2.filtered/{chrom}.matrix.gz",
+        vcf = ROOT_DIR + "/snv/concat/nanocaller.vcf.gz",
+        bed = ROOT_DIR + "/inversions/inversions.bed.gz",
+        txt = GENOME_SIZES
     output:
-        tmp = temp(outdir + "/{r}/snvs/{chrom}.vcf"),
-        vcf = outdir + "/{r}/snvs/{chrom}.vcf.gz"
+        tmp = temp(OUTDIR + "/{r}/snvs/{chrom}.vcf"),
+        vcf = OUTDIR + "/{r}/snvs/{chrom}.vcf.gz"
     log:
-        outdir + "/{r}/snvs/{chrom}.log"
+        OUTDIR + "/{r}/snvs/{chrom}.log"
     shell:
         """(
         ./scripts/assembly/call_snps.py {input.mtx} {input.vcf} {input.bed} {input.txt} {wildcards.chrom} {output.tmp}
@@ -228,11 +225,11 @@ rule make_chrom_snvs:
 
 rule concat_chrom_vcfs:
     input:
-        vcfs = [outdir + "/{r}/snvs/%s.vcf.gz" % c for c in chroms]
+        vcfs = [OUTDIR + "/{r}/snvs/%s.vcf.gz" % c for c in CHROMS]
     output:
-        vcf = outdir + "/{r}/snvs.vcf.gz"
+        vcf = OUTDIR + "/{r}/snvs.vcf.gz"
     log:
-        outdir + "/{r}/snvs.log"
+        OUTDIR + "/{r}/snvs.log"
     shell:
         """(
         bcftools concat -a {input.vcfs} | bcftools sort | bgzip -c > {output.vcf}
@@ -241,13 +238,13 @@ rule concat_chrom_vcfs:
 
 rule benchmark_snps:
     input:
-        vcf1 = lambda wildcards: BENCHMARKS[cellline]["VCF"],
-        vcf2 = outdir + "/{r}/snvs.vcf.gz",
-        bed = lambda wildcards: BENCHMARKS[cellline]["BED"]
+        vcf1 = SNP_VCF,
+        vcf2 = OUTDIR + "/{r}/snvs.vcf.gz",
+        bed = SNP_BED
     output:
-        txt = outdir + "/{r}/snvs_benchmark.json"
+        txt = OUTDIR + "/{r}/snvs_benchmark.json"
     log:
-         outdir + "/{r}/snvs_benchmark.log"
+        OUTDIR + "/{r}/snvs_benchmark.log"
     threads:
         12
     shell:
@@ -260,13 +257,13 @@ rule benchmark_snps:
 
 rule get_hets:
     input:
-        bed = assembly_dir + "/snv/concat/nanocaller.vcf.gz",
-        mtxdir = outdir + "/{r}/matrix2/{chrom}"
+        bed = ROOT_DIR + "/snv/concat/nanocaller.vcf.gz",
+        mtxdir = OUTDIR + "/{r}/matrix2/{chrom}"
     output:
-        bed = outdir + "/{r}/hets/{chrom}.bed",
-        bed_gz = outdir + "/{r}/hets/{chrom}.bed.gz"
+        bed = OUTDIR + "/{r}/hets/{chrom}.bed",
+        bed_gz = OUTDIR + "/{r}/hets/{chrom}.bed.gz"
     log:
-        outdir + "/{r}/hets/{chrom}.log"
+        OUTDIR + "/{r}/hets/{chrom}.log"
     threads:
         12
     shell:
@@ -278,9 +275,9 @@ rule get_hets:
 
 rule merge_hets:
     input:
-        beds = [outdir + "/{r}/hets/%s.bed" % c for c in chroms]
+        beds = [OUTDIR + "/{r}/hets/%s.bed" % c for c in CHROMS]
     output:
-        bed = outdir + "/{r}/hets.all.bed.gz"
+        bed = OUTDIR + "/{r}/hets.all.bed.gz"
     shell:
         """
         cat {input.beds} | sort -k1,1 -k2,2n | bgzip -c > {output.bed}
@@ -291,14 +288,14 @@ rule merge_hets:
 
 rule cutesv:
     input:
-        bam = outdir + "/{r}/bams/{chrom}.{hp}.bam",
-        fa = lambda wildcards: GENOMES[species]["GENOME_FASTA"]
+        bam = OUTDIR + "/{r}/bams/{chrom}.{hp}.bam",
+        fa = GENOME_FASTA
     output:
-        wd = temp(directory(outdir + "/{r}/cuteSV/{chrom}.{hp}.wd")),
-        vcf = temp(outdir + "/{r}/cuteSV/{chrom}.{hp}.vcf"),
-        vcf2 = outdir + "/{r}/cuteSV/{chrom}.{hp}.vcf.gz"
+        wd = temp(directory(OUTDIR + "/{r}/cuteSV/{chrom}.{hp}.wd")),
+        vcf = temp(OUTDIR + "/{r}/cuteSV/{chrom}.{hp}.vcf"),
+        vcf2 = OUTDIR + "/{r}/cuteSV/{chrom}.{hp}.vcf.gz"
     log:
-        outdir + "/{r}/cuteSV/{chrom}.{hp}.log"
+        OUTDIR + "/{r}/cuteSV/{chrom}.{hp}.log"
     threads:
         8
     shell:
@@ -322,9 +319,9 @@ rule cutesv:
 
 rule concat_cutesv_vcfs:
     input:
-        vcfs = [outdir + "/{r}/cuteSV/%s.{hp}.vcf.gz" % c for c in chroms]
+        vcfs = [OUTDIR + "/{r}/cuteSV/%s.{hp}.vcf.gz" % c for c in CHROMS]
     output:
-        vcf = outdir + "/{r}/cuteSV.{hp}.vcf.gz"
+        vcf = OUTDIR + "/{r}/cuteSV.{hp}.vcf.gz"
     shell:
         """
         bcftools concat -a {input.vcfs} | bgzip -c > {output.vcf}
@@ -333,24 +330,24 @@ rule concat_cutesv_vcfs:
 
 rule quantify_sv:
     input:
-        vcf = outdir + "/{r}/cuteSV/{chrom}.{hp}.vcf.gz",
-        bam = outdir + "/{r}/bams/{chrom}.{hpA}.bam"
+        vcf = OUTDIR + "/{r}/cuteSV/{chrom}.{hp}.vcf.gz",
+        bam = OUTDIR + "/{r}/bams/{chrom}.{hpA}.bam"
     output:
-        tmp = temp(outdir + "/{r}/cutesv/quantify/{chrom}.{hp}.on_{hpA}.txt"),
-        txt = outdir + "/{r}/cutesv/quantify/{chrom}.{hp}.on_{hpA}.txt.gz"
+        tmp = temp(OUTDIR + "/{r}/cutesv/quantify/{chrom}.{hp}.on_{hpA}.txt"),
+        txt = OUTDIR + "/{r}/cutesv/quantify/{chrom}.{hp}.on_{hpA}.txt.gz"
     threads:
-        threads
+        THREADS
     shell:
         """
-        ../6_SNV_SV_Comparison/scripts/quantify_sv.p.py {input.vcf} {threads} {input.bam} {output.tmp}
+        ../3_NanoStrandSeq_PseudoBulk/scripts/quantify_sv.p.py {input.vcf} {threads} {input.bam} {output.tmp}
         awk 'NR==1||$1=="{wildcards.chrom}"' {output.tmp} | pigz -p {threads} -c > {output.txt}
         """
 
 rule lite_quantify:
     input:
-        txt = outdir + "/{r}/cutesv/quantify/{source}.txt.gz"
+        txt = OUTDIR + "/{r}/cutesv/quantify/{source}.txt.gz"
     output:
-        txt = outdir + "/{r}/cutesv/quantify_lite/{source}.tsv"
+        txt = OUTDIR + "/{r}/cutesv/quantify_lite/{source}.tsv"
     shell:
         """
         gzip -d -c {input.txt} \
@@ -359,17 +356,17 @@ rule lite_quantify:
 
 rule quantify_psudobulk_sv:
     input:
-        vcf = outdir + "/sv/concat/cuteSV.vcf.gz",
-        bam = outdir + "/{r}/merged.{hp}.bam"
+        vcf = OUTDIR + "/sv/concat/cuteSV.vcf.gz",
+        bam = OUTDIR + "/{r}/merged.{hp}.bam"
     output:
-        txt1 = temp(outdir + "/{r}/quantify_psudobulk_sv.{hp}.tsv"),
-        txt2 = outdir + "/{r}/quantify_psudobulk_sv.{hp}.tsv.gz",
-        txt3 = outdir + "/{r}/quantify_psudobulk_sv.{hp}_lite.tsv"
+        txt1 = temp(OUTDIR + "/{r}/quantify_psudobulk_sv.{hp}.tsv"),
+        txt2 = OUTDIR + "/{r}/quantify_psudobulk_sv.{hp}.tsv.gz",
+        txt3 = OUTDIR + "/{r}/quantify_psudobulk_sv.{hp}_lite.tsv"
     threads:
         24
     shell:
         """
-        ../6_SNV_SV_Comparison/scripts/quantify_sv.p.py {input.vcf} {threads} {input.bam} {output.txt1}
+        ../3_NanoStrandSeq_PseudoBulk/scripts/quantify_sv.p.py {input.vcf} {threads} {input.bam} {output.txt1}
         pigz -p {threads} -c {output.txt1} > {output.txt2}
         awk -v OFS='\\t' '{{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13}}' {output.txt1} > {output.txt3}
         """

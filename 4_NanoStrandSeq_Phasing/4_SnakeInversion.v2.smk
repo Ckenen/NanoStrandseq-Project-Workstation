@@ -1,22 +1,22 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/inversions.v2"
+OUTDIR = ROOT_DIR + "/inversions.v2"
 
 rule all:
     input:
-        outdir + "/regions/filelist.tsv",
-        outdir + "/regions/all_cc_regions.bed.gz",
-        outdir + "/composites/bamlist.tsv",
-        outdir + "/composites/all_chroms.bed.gz",
-        outdir + "/composites/all_chroms.+.bw",
-        outdir + "/composites/all_chroms.-.bw",
-        outdir + "/inversions.bed.gz"
+        OUTDIR + "/regions/filelist.tsv",
+        OUTDIR + "/regions/all_cc_regions.bed.gz",
+        OUTDIR + "/composites/bamlist.tsv",
+        OUTDIR + "/composites/all_chroms.bed.gz",
+        OUTDIR + "/composites/all_chroms.+.bw",
+        OUTDIR + "/composites/all_chroms.-.bw",
+        OUTDIR + "/inversions.bed.gz"
 
 rule make_count_list:
     input:
-        tsv_list = [assembly_dir + "/prepare/stat_bin_reads/%s.RmDup1.tsv" % cell for cell in cells]
+        tsv_list = [ROOT_DIR + "/prepare/stat_bin_reads/%s.RmDup1.tsv" % cell for cell in CELLS]
     output:
-        tsv = outdir + "/regions/filelist.tsv"
+        tsv = OUTDIR + "/regions/filelist.tsv"
     run:
         with open(output.tsv, "w+") as fw:
             for path in input.tsv_list:
@@ -27,12 +27,12 @@ rule fetch_cc_regions:
     input:
         tsv = rules.make_count_list.output.tsv
     output:
-        out = directory(outdir + "/regions/all_cc_regions.outdir"),
-        bed = outdir + "/regions/all_cc_regions.bed.gz"
+        out = directory(OUTDIR + "/regions/all_cc_regions.OUTDIR"),
+        bed = OUTDIR + "/regions/all_cc_regions.bed.gz"
     log:
-        outdir + "/regions/all_cc_regions.log"
+        OUTDIR + "/regions/all_cc_regions.log"
     threads:
-        threads
+        THREADS
     shell:
         """(
         sstools FetchCCRegion -t {threads} {input.tsv} {output.out}
@@ -42,9 +42,9 @@ rule fetch_cc_regions:
 
 rule make_bam_list:
     input:
-        bam_list = [assembly_dir + "/prepare/bams/%s.bam" % cell for cell in cells]
+        bam_list = [ROOT_DIR + "/prepare/bams/%s.bam" % cell for cell in CELLS]
     output:
-        tsv = outdir + "/composites/bamlist.tsv"
+        tsv = OUTDIR + "/composites/bamlist.tsv"
     run:
         with open(output.tsv, "w+") as fw:
             for path in input.bam_list:
@@ -56,12 +56,12 @@ rule make_cc_composite:
         bed = rules.fetch_cc_regions.output.bed,
         tsv = rules.make_bam_list.output.tsv
     output:
-        out = temp(directory(outdir + "/composites/chroms")),
-        bed = outdir + "/composites/all_chroms.bed.gz"
+        out = temp(directory(OUTDIR + "/composites/chroms")),
+        bed = OUTDIR + "/composites/all_chroms.bed.gz"
     log:
-        outdir + "/composites/all_chroms.log"
+        OUTDIR + "/composites/all_chroms.log"
     threads:
-        8
+        THREADS
     shell:
         """(
         sstools MakeCCComposite -t {threads} {input.bed} {input.tsv} {output.out}
@@ -72,7 +72,7 @@ rule make_cc_composite:
 rule make_bigwig:
     input:
         bed = "{prefix}.bed.gz",
-        txt = lambda wildcards: GENOMES[species]["GENOME_SIZE"]
+        txt = GENOME_SIZES
     output:
         bg = temp("{prefix}.{s}.bg"),
         bw = "{prefix}.{s}.bw"
@@ -88,12 +88,12 @@ rule call_inversion:
     input:
         bed = rules.make_cc_composite.output.bed
     output:
-        bed1 = temp(outdir + "/inversions.bed"),
-        bed2 = outdir + "/inversions.bed.gz"
+        bed1 = temp(OUTDIR + "/inversions.bed"),
+        bed2 = OUTDIR + "/inversions.bed.gz"
     log:
-        outdir + "/inversions.log"
+        OUTDIR + "/inversions.log"
     threads:
-        24
+        THREADS
     shell:
         """(
         sstools CallInversion -t {threads} {input.bed} {output.bed1}

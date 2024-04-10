@@ -1,27 +1,27 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/inversions"
+OUTDIR = ROOT_DIR + "/inversions"
 
 
 rule all:
     input:
-        #outdir + "/regions/cc_regions.bed.gz",
-        #outdir + "/composites/all_chroms.bed.gz",
-        #outdir + "/composites/all_chroms.+.bw",
-        #outdir + "/composites/all_chroms.-.bw",
-        outdir + "/inversions.bed.gz"
+        #OUTDIR + "/regions/cc_regions.bed.gz",
+        #OUTDIR + "/composites/all_chroms.bed.gz",
+        #OUTDIR + "/composites/all_chroms.+.bw",
+        #OUTDIR + "/composites/all_chroms.-.bw",
+        OUTDIR + "/inversions.bed.gz"
 
 rule fetch_cc_regions:
     input:
-        txt = assembly_dir + "/prepare/config.json"
+        txt = ROOT_DIR + "/prepare/config.json"
     output:
-        out = directory(outdir + "/regions/cc_regions.outdir"),
-        bed = outdir + "/regions/cc_regions.bed.gz",
-        tbi = outdir + "/regions/cc_regions.bed.gz.tbi"
+        out = directory(OUTDIR + "/regions/cc_regions.OUTDIR"),
+        bed = OUTDIR + "/regions/cc_regions.bed.gz",
+        tbi = OUTDIR + "/regions/cc_regions.bed.gz.tbi"
     log:
-        outdir + "/regions/cc_regions.log"
+        OUTDIR + "/regions/cc_regions.log"
     threads:
-        threads
+        THREADS
     shell:
         """(
         ./scripts/strandtools/fetch_cc_regions.py -p {threads} {input.txt} {output.out}
@@ -38,11 +38,11 @@ rule make_composite:
     input:
         bed = rules.fetch_cc_regions.output.bed
     output:
-        out = temp(directory(outdir + "/composites/chroms")),
-        bed = outdir + "/composites/all_chroms.bed.gz",
-        tbi = outdir + "/composites/all_chroms.bed.gz.tbi"
+        out = temp(directory(OUTDIR + "/composites/chroms")),
+        bed = OUTDIR + "/composites/all_chroms.bed.gz",
+        tbi = OUTDIR + "/composites/all_chroms.bed.gz.tbi"
     log:
-        outdir + "/composites/all_chroms.log"
+        OUTDIR + "/composites/all_chroms.log"
     threads:
         4
     shell:
@@ -71,13 +71,13 @@ rule call_inversion:
     input:
         bed = rules.make_composite.output.bed
     output:
-        bed1 = temp(outdir + "/inversions.bed"),
-        bed2 = outdir + "/inversions.bed.gz",
-        tbi2 = outdir + "/inversions.bed.gz.tbi"
+        bed1 = temp(OUTDIR + "/inversions.bed"),
+        bed2 = OUTDIR + "/inversions.bed.gz",
+        tbi2 = OUTDIR + "/inversions.bed.gz.tbi"
     log:
-        outdir + "/inversions.log"
+        OUTDIR + "/inversions.log"
     threads:
-        24
+        THREADS
     shell:
         """(
         sstools CallInversion -p {threads} {input.bed} {output.bed1}

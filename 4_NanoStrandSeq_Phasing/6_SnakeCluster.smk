@@ -1,19 +1,19 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/clusters"
+OUTDIR = ROOT_DIR + "/clusters"
 
 rule all:
     input:
-        outdir + "/anchors.bed.gz",
-        expand(outdir + "/assigned/{cell}.bed.gz", cell=cells),
-        outdir + "/clustered",
+        OUTDIR + "/anchors.bed.gz",
+        expand(OUTDIR + "/assigned/{cell}.bed.gz", cell=CELLS),
+        OUTDIR + "/clustered",
 
 
 rule get_anchors:
     input:
-        vcf = assembly_dir + "/snv/concat/nanocaller.vcf.gz"
+        vcf = ROOT_DIR + "/snv/concat/nanocaller.vcf.gz"
     output:
-        bed = outdir + "/anchors.bed.gz"
+        bed = OUTDIR + "/anchors.bed.gz"
     shell:
         """
         zcat {input.vcf} | grep -v '#' | grep -v '1/1' | awk 'length($4)==1 && length($5)==1' \
@@ -24,13 +24,13 @@ rule get_anchors:
 
 rule assign_anchor:
     input:
-        bam = assembly_dir + "/prepare/bams/{cell}.bam",
+        bam = ROOT_DIR + "/prepare/bams/{cell}.bam",
         bed = rules.get_anchors.output.bed,
-        txt = assembly_dir + "/wc/{cell}/duplicate_set_names.json"
+        txt = ROOT_DIR + "/wc/{cell}/duplicate_set_names.json"
     output:
-        bed = outdir + "/assigned/{cell}.bed.gz"
+        bed = OUTDIR + "/assigned/{cell}.bed.gz"
     log:
-        outdir + "/assigned/{cell}.log"
+        OUTDIR + "/assigned/{cell}.log"
     shell:
         """(
         ./scripts/strandtools/assign_anchor.py {input.bam} {input.bed} {input.txt} \
@@ -40,12 +40,12 @@ rule assign_anchor:
 
 rule clustering:
     input:
-        beds = expand(outdir + "/assigned/{cell}.bed.gz", cell=cells),
+        beds = expand(OUTDIR + "/assigned/{cell}.bed.gz", cell=CELLS),
     output:
-        out = directory(outdir + "/clustered")
+        out = directory(OUTDIR + "/clustered")
     log:
-        outdir + "/clustered.log"
+        OUTDIR + "/clustered.log"
     shell:
         """
-        ./scripts/strandtools/cluster_cells.py {assembly_conf} {output.out} &> {log}
+        ./scripts/strandtools/cluster_cells.py {CONF} {output.out} &> {log}
         """

@@ -1,23 +1,22 @@
 #!/usr/bin/env runsnakemake
 include: "0_SnakeCommon.smk"
-outdir = assembly_dir + "/wc"
-
+OUTDIR = ROOT_DIR + "/wc"
 
 rule all:
     input:
-        expand(outdir + "/{cell}", cell=cells),
+        expand(OUTDIR + "/{cell}", cell=CELLS),
 
 rule fetch_wc_regions:
     input:
-        bam = assembly_dir + "/prepare/bams/{cell}.bam",
-        bed = assembly_dir + "/blackhole/blacklist.bed.gz"
+        bam = ROOT_DIR + "/prepare/bams/{cell}.bam",
+        bed = ROOT_DIR + "/blackhole/blacklist.bed.gz"
     output:
-        out = directory(outdir + "/{cell}")
+        directory(OUTDIR + "/{cell}")
     log:
-        outdir + "/{cell}.log"
+        OUTDIR + "/{cell}.log"
     shell:
         """
-        sstools FetchWCRegion -b {input.bed} {input.bam} {output.out} &> {log}
+        sstools FetchWCRegion -b {input.bed} {input.bam} {output} &> {log}
         """
 
 
